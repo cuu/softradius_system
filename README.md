@@ -4,6 +4,8 @@
 * beego 1.7+
 * cuu radius libs go get -u github.com/cuu/radius
 * AdminLTE
+* rethinkdb
+* gorethink v3
 
 # 大宝剑计费系统 ,基于go语言,beego框架,AdminLTE UI
 
