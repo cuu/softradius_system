@@ -1,0 +1,65 @@
+<style type="text/css">
+    td {
+        text-align: left
+    }
+</style>
+<script>
+    function deleteProduct(product_id) {
+        if (confirm("确认删除吗？")) {
+            window.location.href = "/product/delete?product_id=" + product_id;
+        }
+    }
+</script>
+
+<div class="box">
+    <div class="panel-heading"><i class="fa fa-archive"></i> 资费列表</div>
+    <div class="panel-body">  
+        <div class="pull-right bottom10">
+           	{{ if (call  .Match "/product/add" ) }}
+            <a href="/product/add" class="btn btn-sm btn-default">添加资费</a>
+            {{end}}
+        </div>
+
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>资费名称</th>
+                <th>资费策略</th>
+                <th>价格(元)</th>
+                <th>并发数</th>
+                <th>是否绑定MAC</th>
+                <th>是否绑定VLAN</th>
+                <th>上行速率</th>
+                <th>下行速率</th>
+                <th>状态</th>                
+            </tr>
+            </thead>
+            <tbody>
+	      {{ range .Products }}
+            <tr>
+                <td><a href="/product/detail?product_id={{.Id}}">{{.Name }}</a></td>
+                <td>
+                   {{map_get $.ProductPolicys  .Policy }}
+                </td>
+                <td>{{Fen2yuan .FeePrice }}</td>
+                <td>{{.ConcurNumber}}</td>
+                <td>{{map_get $.YesOrNo .BindMac }}</td>
+                <td>{{map_get $.YesOrNo .BindVlan }}</td>
+                <td>{{Bps2mbps .InputMaxLimit}} Mbps</td>
+                <td>{{Bps2mbps .OutputMaxLimit}} Mbps</td>
+                <td>{{map_get $.STATUS .Status }}</td>
+                <td>
+                    {{ if call $.Match "/product/update" }}
+                    <a class="btn btn-default btn-xs" href="/product/update?product_id={{ .Id }}">修改</a>
+                    {{end}}
+                    {{ if call $.Match "/product/delete" }}
+                    <a class="btn btn-default btn-xs"  href="javascript:deleteProduct('{{ .Id }}')">删除</a>
+                    {{end }}
+                </td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+       
+    </div>
+</div>

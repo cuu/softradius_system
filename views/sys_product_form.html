@@ -1,0 +1,82 @@
+<div class="box">
+  <div class="panel-heading"><i class="fa fa-archive"></i> {{ .Title }}
+    <div class="bar pull-right"><a href="javascript:history.go(-1);">返回</a></div>
+  </div>
+  <div class="panel-body">
+    {{if .msg }}
+    <div class="alert alert-warning">{{ .msg }}</div>
+    {{end}}
+    {{ str2html .Form}}
+  </div>
+</div>
+
+
+    <script>
+
+prices = {
+    "0":"每月单价(元)",
+    "1":"每小时单价(元)",
+    "2":"买断包月总价(元)",
+    "3":"买断时长总价(元)",
+    "4":"每MB流量单价(元)",
+    "5":"买断流量总价(元)",
+    "6":"买断时间+流量总价(元)",
+    "7":"买断时间总价(元)"
+}
+//根据资费调整界面
+function updateUI(){
+    var policy = $("#policy").val();
+    $("#lab_fee_price").html(prices[policy]);
+    console.log(prices[policy])
+    
+    if(policy=="0"||policy=="1"||policy=="4"){
+	// $("#fee_months").val(0);
+	// $("#fee_times").val(0);
+	// $("#fee_flows").val(0);
+	$("#fee_months").parent().parent().hide();
+	$("#fee_times").parent().parent().hide();
+	$("#fee_flows").parent().parent().hide();
+    }else if(policy=="2"){
+	// $("#fee_times").val(0);
+	// $("#fee_flows").val(0);
+	$("#fee_months").parent().parent().show();
+	$("#fee_times").parent().parent().hide();
+	$("#fee_flows").parent().parent().hide();
+    }else if(policy=="3"){
+	// $("#fee_months").val(0);
+	// $("#fee_flows").val(0);
+	$("#fee_months").parent().parent().hide();
+	$("#fee_times").parent().parent().show();
+	$("#fee_flows").parent().parent().hide();
+    }else if(policy=="5"){
+	// $("#fee_months").val(0);
+	// $("#fee_flows").val(0);
+	$("#fee_months").parent().parent().hide();
+	$("#fee_times").parent().parent().hide();
+	$("#fee_flows").parent().parent().show();
+    }else if(policy=="6")
+    {
+	$("#fee_months").parent().parent().hide();
+	//        $("#fee_days").parent().parent().show();
+	$("#fee_times").parent().parent().show();
+	$("#fee_flows").parent().parent().show();
+
+    }else if(policy=="7")
+    {
+	$("#fee_months").parent().parent().hide();
+	//        $("#fee_days").parent().parent().show();
+	$("#fee_times").parent().parent().show();
+	$("#fee_flows").parent().parent().hide();
+    }
+
+
+}
+//页面初始化
+$(document).ready(function (){
+    updateUI();
+    $('#policy').change(function() {
+	updateUI();
+    });  
+});
+</script>
+

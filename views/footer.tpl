@@ -1,0 +1,2 @@
+
+<span>copyright</span>

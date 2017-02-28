@@ -1,0 +1,291 @@
+    <div class="box">
+    <div class="panel-heading"><i class="fa fa-user"></i> 用户受理
+    <div class="bar pull-right"><a href="javascript:history.go(-1);">返回</a></div>
+    </div>
+        <div class="panel-body">
+        <div class="pull-right">
+           <div class="btn-group" role="group" aria-label="...">
+               
+            
+            {{if eq  .User.Status 2 }}
+           
+                {{ if (call $.Match "/member/resume" ) }}
+                <a class="btn btn-sm btn-default" href="javascript:do_resume('${user.account_number}');">复机</a>
+                {{end}}
+               
+            {{else if eq  .User.Status  1}}
+            
+                {{if (call $.Match "/member/update") }}
+                <a href="/member/update?member_id=${member.member_id}&account_number=${user.account_number}" class="btn btn-sm btn-default">修改基本资料</a>
+                {{end}}
+
+                {{if (call $.Match "/member/release") }}
+                <a class="btn btn-sm btn-default" href="/member/update?account_number=${user.account_number}">修改策略</a>
+                {{end}}
+
+                {{if (call $.Match "/member/release") }}
+                <a class="btn btn-sm btn-default" href="javascript:release('${user.account_number}');">释放绑定</a>
+                {{end}}
+            
+                {{if (call $.Match "/member/feechange") }}
+                <a class="btn btn-sm btn-default" href="/member/feechange?account_number=${user.account_number}">资费变更</a>
+                {{end}}
+               
+                {{ if (call $.Match "/member/pause" ) }}
+                <a class="btn btn-sm btn-default" href="javascript:do_pause('${user.account_number}');">停机</a>
+                {{end}}
+               
+                {{ if (map_get $.PolicyMap .User.ProductId)  | In 0 2 3 5 }}
+               
+                    {{ if call $.Match "/member/next" }}
+                    <a class="btn btn-sm btn-default" href="/member/next?account_number=${user.account_number}">续费</a>
+                    {{end}}
+                   
+                {{else if (map_get $.PolicyMap .User.ProductId) | In 1 4 }}
+                   
+                    {{ if call $.Match "/member/charge" }}
+                    <a class="btn btn-sm btn-default" href="/member/charge?account_number=${user.account_number}">充值</a>
+                    {{end}}
+                   
+                {{end}}
+                   
+                {{if call $.Match "/member/cancel " }}
+                <a class="btn btn-sm btn-default" href="/member/cancel?account_number=${user.account_number}">销户</a>
+                {{end}}
+               
+            {{ else if eq  .User.Status 4 }}
+           
+                {{ if call $.Match "/member/next" }}
+                <a class="btn btn-sm btn-default" href="/member/next?account_number=${user.account_number}">续费</a>
+                {{end}}
+               
+            {{end}}
+            
+            {{ if call $.Match "/member/delete" }}
+            <a class="btn btn-sm btn-default" href="javascript:do_delete('${user.account_number}');">删除</a>
+            {{end}}
+            </div>
+        </div>   
+        <br> 
+
+        <table class="table">
+                <thead>
+                    <tr>
+                        <th colspan="6"> 基本信息</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>用户姓名</td>
+                        <td>{{.User.RealName}}</td>
+                        <td>证件号码</td>
+                        <td>{{.User.IdCard}}</td>
+                        <td>自助服务登陆名</td>
+                        <td>{{.User.Name}}</td>                 
+                    </tr>
+                    <tr>
+                        <td>年龄</td>
+                        <td>{{.User.Age}}</td>
+                        <td>email</td>
+                        <td>{{.User.Email}}
+                        {{ if ne .User.Email "" }}
+			  {{ if eq .User.EmailActive true }}
+                        	已绑定
+			  {{else}}
+			  未绑定
+			  {{end}}
+                        {{end}}
+                        </td>
+                        <td>联系电话</td>
+                        <td>{{.User.Mobile}}</td>
+                    </tr>      
+                    <tr>
+                        <td>地址</td>
+                        <td>{{.User.Address}}</td>
+                        <td>创建时间</td>
+                        <td>{{.User.CreateTime}}</td>
+                        <td>更新时间</td>
+                        <td>{{.User.UpdateTime}}</td>                        
+                    </tr>                                                                       
+		    <tr>
+		      <td>代理商</td>
+		      <td>{{map_get $.AgencyMap .User.AgencyId}}</td>
+		    </tr>
+            </tbody>
+        </table>
+        <table class="table">
+                <thead>
+                    <tr>
+                        <th colspan="6"> 认证信息</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>用户账号(密码)</td>
+                        <td>{{ .User.Name }}
+			  ({{.User.Password}})
+                        </td>
+                        <td>资费名称</td>
+                        <td>{{map_get $.ProductsMap .User.ProductId}}</td>
+                        <td>用户状态</td>
+                        <td>
+                            {{ if (call $.IsExpire .User.ExpireDate) or (eq .User.Status 4 ) }}
+                                <span class="label label-warning">到期</span>
+                            {{else if eq .User.Status 1  }}
+                                <span class="label label-success">正常</span>
+                            {{else if eq .User.Status 2   }}
+                                <span class="label label-default">停机</span>
+                            {{else if eq .User.Status 3 }}
+                                <span class="label label-danger">销户</span>
+                            {{end}}
+                        </td>                 
+                    </tr>
+                    <tr>
+                        <td>过期时间</td>
+                        <td>{{.User.ExpireDate}}</td>
+                        <td>余额</td>
+                        <td>{{Fen2yuan .User.Balance}}</td>
+                        <td>剩余时长</td>
+                        <td>{{Sec2hour .User.TimeLength}}小时</td>
+                    </tr>      
+                    <tr>
+                        <td>剩余流量</td>
+                        <td>{{Kb2mb .User.FlowLength}}MB</td>
+                        <td>并发数</td>
+                        <td>{{.User.ConcurNumber}}</td>
+                        <td>绑定MAC</td>
+                        <td>{{map_get $.YESNO .User.BindMac}}</td>                        
+                    </tr>   
+                    <tr>
+                        <td>绑定VLAN</td>
+                        <td>{{map_get $.YESNO .User.BindVlan}}</td>
+                        <td>VLANID1/VLANID2</td>
+                        <td>{{.User.VlanId}}/{{.User.VlanId2}}</td>
+                        <td>MAC地址</td>
+                        <td>{{.User.MacAddr}}</td>                        
+                    </tr>   
+                    <tr>
+                        <td>IP地址</td>
+                        <td>{{.User.IpAddress}}</td>
+                        <td>最近停机时间</td>
+                        <td>{{.User.LastPause}}</td>
+                        <td>创建时间</td>
+                        <td>{{.User.CreateTime}}</td>                        
+                    </tr>
+                    <tr>
+		      <td>已用流量上/下行</td>
+		      <td>{{Kb2mb .User.InFlow }}M/{{Kb2mb .User.OutFlow}}M </td>
+		      <td>连续使用小时数</td>
+		      <td>{{Sec2hour .User.UsedTime }}小时</td>
+            </tbody>
+        </table>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th colspan="6"> 账号受理记录</th>
+                </tr>
+                <tr class="active">
+                    <th>用户账号</th>
+                    <th>受理类型</th>
+                    <th>操作员</th>
+                    <th>受理时间</th>
+                    <th>订单号</th>
+                    <th>受理描述</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{range .AcceptsLog }}
+            <tr>
+                <td>{{.MemberName}}</td>
+                <td>{{map_get $.AcceptTypeMap .AcceptType}}</td>
+                <td>{{.OperatorName}}</td>
+                <td>{{.AcceptTime}}</td>
+                <td>{{.OrderId}}</td>
+                <td>{{.AcceptDesc}}</td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+
+        <table class="table ">
+            <thead>
+                <tr>
+                    <th colspan="7"> 账号交易记录</th>
+                </tr>
+                <tr class="active">
+                    <th>订单号</th>
+                    <th>资费</th>
+                    <th>应缴</th>
+                    <th>实缴</th>
+                    <th>状态</th>
+                    <th>时间</th>
+                    <th width=25%>描述</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{range .OrderLog}}
+            <tr>
+                <td>{{.OrderId}}</td>
+                <td>{{.ProductName}}</td>
+                <td>{{Fen2yuan .OrderFee}}</td>
+                <td>{{Fen2yuan .ActualFee}}</td>
+                <td>{{map_get $.PayStatusMap .PayStatus}}</td>
+                <td>{{.CreateTime}}</td>
+                <td>{{.OrderDesc}}</td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+</div>
+
+
+<script>
+
+function do_pause(account_number)
+{
+    if (!confirm("确认操作吗？")) {
+        return;
+    }
+    params = {account_number:account_number};
+    $.post("/account/pause", params, function (data) {
+        alert(data.msg)
+        window.location.reload();
+    },"json");
+}
+
+function do_resume(account_number)
+{
+    if (!confirm("确认操作吗？")) {
+        return;
+    }
+    params = {account_number:account_number};
+    $.post("/account/resume", params, function (data) {
+        alert(data.msg)
+        window.location.reload();
+    },"json");
+}    
+
+function release(account_number)
+{
+    params = {account_number:account_number};
+    $.post("/ops/user/release", params, function (data) {
+        alert(data.msg)
+        location.href.reload();
+    },"json");
+}
+
+function do_delete(account_number)
+{
+    if(confirm("删除账号将删除账号所有相关数据，包括账号，日志，订单等，不可恢复，确认操作吗？")) {
+        window.location.href = "/account/delete?account_number="+account_number;
+    }
+    
+}
+
+</script>
+
+

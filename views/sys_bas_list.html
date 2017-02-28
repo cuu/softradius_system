@@ -1,0 +1,58 @@
+<script>
+    function deleteBas(bas_id)
+    {
+        if(confirm("确认删除吗？"))
+        {
+            window.location.href = "/bas/delete?bas_id="+bas_id;
+        }
+    }
+</script>
+
+<div class="box">
+    <div class="panel-heading"><i class="fa fa-sitemap"></i> BAS列表</div>
+        <div class="panel-body">
+            <div class="container">
+                <div class="pull-right bottom10">
+                    {{ if call $.Match "/bas/add" }}
+                     <a href="/bas/add" class="btn btn-sm btn-default">增加BAS</a>
+                    {{end}}
+                </div>
+
+                <table class="table ">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>地址</th>
+                            <th>类型</th>
+                            <th>共享密钥</th>
+                            <th>CoA端口</th>
+                            <th>时区</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {{ range .BasList }}
+                            <tr>
+                                <td>{{.Name}}</td>
+                                <td>{{.IpAddr}}</td>
+                                <td>{{map_get $.BasVendorType .VendorId}}</td>
+                                <td>{{.Secret}}</td>
+                                <td>{{.CoaPort}}</td>
+																	
+                                <td>{{map_get $.TimeTypeMap .TimeType}}</td>
+                                <td>
+                                    {{if call $.Match "/bas/update" }}
+                                    <a class="btn btn-default btn-xs" href="/bas/update?bas_id={{.Id}}">修改</a>
+                                    {{end}}
+                                    {{ if call $.Match "/bas/delete" }}
+                                    <a class="btn btn-default btn-xs" href="javascript:deleteBas('{{.Id}}')">删除</a>
+                                    {{end}}
+                                </td>
+                            </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+

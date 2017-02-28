@@ -1,0 +1,101 @@
+<script>
+    function deleteAttr(attr_id) {
+        if (confirm("确认删除吗？")) {
+            window.location.href = "/product/attr/delete?attr_id=" +attr_id;
+        }
+    }
+</script>
+    
+	<div class="box">
+    <div class="panel-heading"><i class="fa fa-archive"></i> 资费信息
+    <div class="bar pull-right"><a href="javascript:history.go(-1);">返回</a></div>
+    </div>
+        <div class="panel-body">
+        <div class="pull-right bottom10">
+            {{ if (call $.Match "/product/attr/add" )}}
+            <a href="/product/attr/add?product_id={{.Product.Id}}" class="btn btn-sm btn-info">增加策略属性</a>
+            {{end}}
+        </div>   
+        <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th colspan="6">基本信息</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>资费名称</td>
+                        <td>{{.Product.Name}}</td>
+                        <td>资费策略</td>
+                        <td>{{map_get $.PolicyMap $.Product.Policy}}</td>
+                        <td>资费状态</td>
+                        <td>{{map_get $.OprStatus $.Product.Status}}</td>                 
+                    </tr> 
+                    <tr>
+                        <td>资费价格</td>
+                        <td>{{Fen2yuan  $.Product.FeePrice}}</td>
+                        <td>计费时段</td>
+                        <td>{{$.Product.FeePeriod}}</td>
+                        <td>买断月数</td>
+                        <td>{{$.Product.FeeMonths}}</td>                        
+                    </tr>  
+                    <tr>
+                        <td>绑定MAC</td>
+                        <td>{{map_get $.YESNO $.Product.BindMac}}</td>                        
+                        <td>绑定VLAN</td>
+                        <td>{{map_get $.YESNO $.Product.BindVlan}}</td>
+                        <td>并发数</td>
+                        <td>{{$.Product.ConcurNumber}}</td>
+                    </tr>   
+                    <tr>
+                        <td>最大上行速率</td>
+                        <td>{{Bps2mbps $.Product.InputMaxLimit}} Mbps</td>
+                        <td>最大下行速率</td>
+                        <td>{{Bps2mbps $.Product.OutputMaxLimit}} Mbps</td>
+                        <td>授权时长</td>
+                        <td>{{Sec2hour $.Product.FeeTimes}} 小时</td>                     
+                    </tr>   
+                    <tr>
+                        <td>创建时间</td>
+                        <td>{{$.Product.CreateTime}}</td>  
+                        <td>更新时间</td>
+                        <td>{{$.Product.UpdateTime}}</td>          
+                        <td>授权流量</td>
+                        <td>{{Kb2mb $.Product.FeeFlows}} MB</td>                                      
+                    </tr>                                                                                          
+            </tbody>
+        </table>
+
+        <table class="table table-hover ">
+                <thead>
+                    <tr>
+                        <th colspan="4">扩展策略属性列表</th>
+                    </tr>
+            <tr class="active">
+                <th>策略名称</th>
+                <th>策略值</th>
+                <th>策略描述</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range  $.ProductAttrs}}
+            <tr>
+                <td>{{.Name}}</td>
+                <td>{{.Value}}</td>
+                <td>{{.Desc}}</td>
+                <td>
+                {{if call $.Match "/product/attr/update" }}
+                <a class="opt-btn btn-default" href="/product/attr/update?attr_id={{.Id}}">修改</a>
+                {{end}}
+                {{ if call $.Match "/product/attr/delete" }}
+                <a class="opt-btn btn-default" href="javascript:deleteAttr('{{.Id}}');">删除</a>
+                {{end}}
+                </td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>        
+    </div>
+</div>
+</div>
