@@ -30,7 +30,11 @@ MPL 2.0
 * ./softradius -radacct to start radius acct server
 * go to http://127.0.0.1:8081 to see the interface,default password would be "admin/admin"
 
-
+![Operators](screenshots/operators.png?raw=true "operators")
+![products](screenshots/products.png?raw=true   "Products")
+![member](screenshots/member_quick.png?raw=true "Members")
+![online](screenshots/online.png?raw=true  "Online")
+![Bas](screenshots/bas.png?raw=true "Bas")
 
 ## Development status
 - [x] Opertors, admin fully worked,now going for the privilege of normal operator and agency
@@ -39,6 +43,7 @@ MPL 2.0
 - [x] Radius acct ,accouting flow and time to User self,will add acct tickets for logging
 - [ ] Agency
 - [x] Members , only quick open, no searching
+- [ ] Multi Vendor radius support
 
 Still needs a lot of test ,right now just very beginning of the project
 
