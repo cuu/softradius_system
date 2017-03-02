@@ -37,12 +37,13 @@ MPL 2.0
 ![Bas](screenshots/bas.png?raw=true "Bas")
 
 ## Development status
-- [x] Opertors, admin fully worked,now going for the privilege of normal operator and agency
-- [x] Online user ,accouting worked,
+- [x] Opertors, admin fully working,now going for the privilege of normal operators and agency
+- [x] Online user ,accouting works,
 - [x] Radius auth ,auth user from database, have not  implemented kickoff 
 - [x] Radius acct ,accouting flow and time to User self,will add acct tickets for logging
 - [ ] Agency
-- [x] Members , only quick open, no searching
+- [x] Members , only quick open
+- [x] Sidbar search
 - [ ] Multi Vendor radius support
 
 Still needs a lot of test ,right now just very beginning of the project
