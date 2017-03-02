@@ -2,7 +2,7 @@ package controllers
 
 import (
 	r "github.com/cuu/softradius/routers"
-//	"github.com/cuu/softradius/models"
+	"github.com/cuu/softradius/models"
 	"github.com/cuu/softradius/libs"
 	"fmt"
 	"strconv"
@@ -18,6 +18,7 @@ import (
 
 type DefController struct {
 	BaseController
+	PerPage  int
 }
 
 //每个controller 有这样的命名规则,保证不重复
@@ -41,7 +42,7 @@ func init(){
 		r.Route{Path:"/",Name:"主页",Category:_cate,Is_menu :false, Order:1.3,Is_open:true, Methods:"*:HomePage"})
 
  	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/quicksearch",Name:"快速搜索栏",Category:_cate,Is_menu :false, Order:1.4,Is_open:true, Methods:"*:HomePage"})
+		r.Route{Path:"/quicksearch",Name:"快速搜索栏",Category:_cate,Is_menu :false, Order:1.4,Is_open:true, Methods:"*:QuickSearch"})
 		
 	_ctl.AddRoutes()
 	
@@ -78,6 +79,7 @@ func (this *DefController) GuuPrepare(){
 	this.LayoutSections["ContentHeader"] = ""
 	this.LayoutSections["HeadCss"] = ""
 
+	this.PerPage = 100
 }
 
 //------------------------------------------------------------
@@ -159,4 +161,46 @@ func (this *DefController) Login_post() {
 		this.Ctx.WriteString( "{code:1,msg:\"JSON ERROR\"}")
 	}
 	
+}
+
+func (this *DefController) QuickSearchMembers(qu string ,skip int )(int, []Members){
+	var nods []Members
+	
+	rdb.DataBase().SearchSkipGet(&nods,"Name",qu, skip,this.PerPage)
+	total := rdb.DataBase().SearchCount(&nods,"Name",qu)
+	
+	
+	return total,nods
+}
+
+func (this *DefController) QuickSearch() {
+
+	query := this.GetString("q")
+	page ,_ := strconv.ParseInt(this.GetString("page_id"),10,16)
+
+	if page <= 0 { page = 1}
+	if query == "" {
+		this.Abort("403")
+	}
+	
+	nods := this.NodeList()
+	pdus := this.ProductList()
+	
+	total,mbms := this.QuickSearchMembers(query, int(page-1)*this.PerPage )
+	
+	this.Data["MemberList"] = mbms
+	this.Data["ProductMap"] = this.ToPairMapS(pdus,[]string{"Id","Name"})
+	this.Data["NodeMap"]    = this.ToPairMapS(nods,[]string{"Id","Name"})
+	this.Data["IsExpire"]  = libs.IsExpire
+	if page >= 0 {
+		url := libs.RemoveSuffix(this.Ctx.Input.URI(),"/")
+		pg   := models.NewPager(total,this.PerPage, int(page),url)	
+		this.Data["Paginator"] = pg.Render()
+	}
+	this.ResetLayout()
+	this.TplName ="bus_member_list.html"
+
+
+	
+	this.Render()
 }

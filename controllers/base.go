@@ -76,6 +76,19 @@ func (this *BaseController) GetURLName(){
 	}
 }
 
+func (this *BaseController) ResetLayout(){
+	this.Layout = "layout_base.tpl"
+	if this.LayoutSections == nil { 
+		this.LayoutSections = make(map[string]string)
+	}
+	
+	this.LayoutSections["Sidebar"] = "sidebar.tpl"
+	this.LayoutSections["Header"]  = "header.tpl"
+	this.LayoutSections["Footer"]  = "footer.tpl"
+	this.LayoutSections["ContentHeader"] = "content-header.tpl"
+	this.LayoutSections["HeadCss"] = "head_css.tpl"
+}
+
 
 func (this *BaseController) Prepare(){
 	this.Data["adminlte"] = "/AdminLTE"

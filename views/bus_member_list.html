@@ -42,6 +42,9 @@
             {{end}}
             </tbody>
         </table>
+	{{ if .Paginator }}
+	{{ str2html .Paginator}}
+	{{end}}
     </div>
 </div>
 
