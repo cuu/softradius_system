@@ -11,7 +11,7 @@ import (
 
 	//	sort "github.com/cuu/softradius/libs/sortutil"
 	"encoding/json"
-//	re "gopkg.in/gorethink/gorethink.v3"
+	re "gopkg.in/gorethink/gorethink.v3"
 	rdb "github.com/cuu/softradius/database/shelf"
 	
 )
@@ -165,10 +165,13 @@ func (this *DefController) Login_post() {
 
 func (this *DefController) QuickSearchMembers(qu string ,skip int )(int, []Members){
 	var nods []Members
+
+
+	rdb.DataBase().SearchSkipGetFunc(&nods,func(me re.Term)re.Term{
+		return me.Field("Name").Match(qu)
+	}, skip,this.PerPage)
 	
-	rdb.DataBase().SearchSkipGet(&nods,"Name",qu, skip,this.PerPage)
 	total := rdb.DataBase().SearchCount(&nods,"Name",qu)
-	
 	
 	return total,nods
 }
