@@ -97,7 +97,7 @@
                         {{end}}
                         </td>
                         <td>联系电话</td>
-                        <td>{{.User.Mobile}}</td>
+                        <td>{{Or .User.Mobile "无"}}</td>
                     </tr>      
                     <tr>
                         <td>地址</td>
@@ -108,8 +108,10 @@
                         <td>{{.User.UpdateTime}}</td>                        
                     </tr>                                                                       
 		    <tr>
+		      <td>区域</td>
+		      <td>{{map_get $.NodeMap .User.NodeId}} </td> 
 		      <td>代理商</td>
-		      <td>{{map_get $.AgencyMap .User.AgencyId}}</td>
+		      <td>{{Or (map_get $.AgencyMap .User.AgencyId)  "无" }}</td>
 		    </tr>
             </tbody>
         </table>
@@ -168,7 +170,7 @@
                         <td>IP地址</td>
                         <td>{{.User.IpAddress}}</td>
                         <td>最近停机时间</td>
-                        <td>{{.User.LastPause}}</td>
+                        <td>{{Or .User.LastPause "空"}}</td>
                         <td>创建时间</td>
                         <td>{{.User.CreateTime}}</td>                        
                     </tr>

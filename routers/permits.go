@@ -132,6 +132,7 @@ func init() {
 	beego.AddFuncMap("Sec2hour",libs.Sec2hour)
 	
 	beego.AddFuncMap("In",      libs.In)
+	beego.AddFuncMap("Or",      libs.Or)
 }
 
 func (r *Route) GetOprs() []string {

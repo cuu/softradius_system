@@ -370,7 +370,7 @@ func (this *BusController) MemberQuick() {
 
 func (this *BusController) MemberDetail() {
 	member_id := this.GetString("member_id")
-
+	nods := this.NodeList()
 	pdus := this.ProductList()
 	agcs := this.AgencyList()
 	
@@ -399,6 +399,7 @@ func (this *BusController) MemberDetail() {
 		this.Data["ProductsMap"] = this.ToPairMapS(pdus,[]string{"Id","Name"})
 		this.Data["AgencyMap"  ] = this.ToPairMapS(agcs,[]string{"Id","Name"})
 		this.Data["PolicyMap"] = this.ToPairMapI(pdus,[]string{"Id","Policy"})
+		this.Data["NodeMap"]    = this.ToPairMapS(nods,[]string{"Id","Name"})
 		this.Data["OrderLogs" ] = orderlogs
 		this.Data["AcceptLogs"] = acceptlogs
 		this.Data["IsExpire"]   = libs.IsExpire

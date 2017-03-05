@@ -184,10 +184,34 @@ func FillStruct(m map[string]interface{}, s interface{}) error {
 	return nil
 }
 
+func Or(in interface{}, other interface{} ) interface{} {
+	if in == nil {
+		in = ""
+	}
+	t := Type(in)
+	switch t {
+	case "string":
+		tv := reflect.ValueOf(in).String()
+		if tv == "" {
+			return other
+		}
+	case "int":
+		tv := reflect.ValueOf(in).Int()
+		if tv == 0 {
+			return other
+		}
+	}
+	
+	return ""
+}
+
 func In( in interface{},  list ...interface{}) bool {
 	fmt.Print("In: ",in ," ")
 	fmt.Println("List: ",list)
 	ret := false
+	if in == nil {
+		in = ""
+	}
 	t := Type(in)
 	switch t {
 	case "string":
