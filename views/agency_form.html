@@ -1,0 +1,87 @@
+
+<div class="box box-default">
+        <div class="box-header">
+            <i class="fa fa-user-secret"></i>
+            <h3 class="box-title">{{ .Form.Title }} </h3>
+            <div class="bar pull-right"><a href="javascript:history.go(-1);"><i class="fa fa-reply"></i> 返回</a></div>
+        </div>
+        <div class="box-body">
+            <div class="container">
+            {{ if ne $.msg ""}}
+            <div class="alert alert-warning">{{ .msg }}</div>
+            {{end}}
+            <form class="form-horizontal form-well" role="form" action="{{.Form.Action}}" method="post">
+            {{str2html  $.Form.RenderCss }}
+            
+            <div class="btn-group" role="group" aria-label="...">
+              <button id="checkAll" type="button" class="btn btn-default">全部选择</button>
+              <button id="delCheckAll" type="button" class="btn btn-default">取消选择</button>
+            </div>
+              <hr>
+              
+
+             	{{ range $index,$elem := .AllMenus }}
+              <div class="panel">
+                <div class="box-header">
+                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> 
+                    {{ .Category }} &nbsp;
+                    <input type="checkbox" value="" class="sloop" id="s-{{$index}}" onclick="doSelect('s-{{$index}}')">
+                    </div>
+                <!-- List group -->
+                <ul class="list-group">
+                    <div class="container-fluid">
+		      {{ range .Items }}
+			{{ if (call $.CheckOpen  .Path ) }}										
+                  <div class='row col-md-3'>
+                      <li class="list-group-item ">
+                          <!-- <font color="gray">${loop.index}&nbsp;</font> -->
+                          <label>
+                          <input type="checkbox" class="s-{{$index}}" id="rule_item"  name="RuleItem" 
+                          value="{{.Path}}"   {{call $.CheckInRules .Path}}>
+   
+                           &nbsp;{{.Name}}
+                         </label>
+                      </li>
+                    </div>
+	                 {{end}}
+                  {{end}}
+                  </div>
+                </ul>
+              </div>
+             	{{end}}
+
+        </form>
+ </div>
+    </div>
+</div>
+
+
+<script>
+$(document).ready(function (){
+    $("#checkAll").click(function() {  
+        $("input[name='RuleItem']:checkbox").each(function() { 
+            $(this).prop("checked", true);  
+            $(".sloop").prop("checked", true);
+        })    
+    }); 
+    //取消全选   
+    $("#delCheckAll").click(function() {  
+        $("input[name='RuleItem']:checkbox").each(function() { 
+            $(this).prop("checked",false);  
+            $(".sloop").prop("checked", false);
+        })  
+    });
+
+});
+
+function doSelect(sid){
+    $("."+sid).each(function () {
+        if($("#"+sid).is(':checked')){
+            $(this).prop("checked", true);
+        }else{
+            $(this).prop("checked", false);
+        }
+
+    })
+}
+</script>

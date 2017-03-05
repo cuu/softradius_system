@@ -301,7 +301,7 @@ func (this *SysController) SysAddOpr() {
 	if this.Ctx.Input.IsPost() {
 
 		if this.Validator2(f) == false {
-			this.Data["Form"] = f.Render()
+			this.Data["Form"] = f
 			this.Render()
 			return
 		}
@@ -344,6 +344,12 @@ func (this *SysController) SysUpdateOpr() {
 	f := this.SysAddOprForm("Update","/opr/update")
 	
 	if this.Ctx.Input.IsPost(){
+		
+		if this.Validator2(f) == false {
+			this.Data["Form"] = f
+			this.Render()
+			return
+		}
 		
 		fmt.Println("Products:", this.GetStrings("Products"))
 		one := &Operators{}

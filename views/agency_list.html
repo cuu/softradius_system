@@ -1,0 +1,71 @@
+<script>
+  function deleteAgency(agency_id)
+  {
+  if(confirm("确认删除吗？"))
+  {
+  window.location.href = "/agency/delete?agency_id="+agency_id;
+  }
+  }
+</script>
+
+<div class="box box-default">
+  <div class="box-header">
+    <i class="fa fa-users"></i>
+    <h3 class="box-title">代理商信息列表</h3>
+    <div class="bar pull-right">
+      <a href="javascript:window.location.reload();"><i class="fa fa-refresh"></i> 刷新</a>
+    </div>
+  </div>
+  <div class="box-body">
+    <div class="container">
+      {{ if eq (call $.GetCookie "opr_type") "0" }}
+      <div class="pull-left bottom10">
+        <a href="/agency/open" class="btn btn-sm bg-navy"><i class="fa fa-plus-circle"></i> 代理商开户</a>
+      </div>
+      {{end}}
+
+      <table class="table table-hover table-box">
+        <thead >
+          <tr>
+            <th>名称</th>
+            <th>联系人</th>
+            <th>联系手机</th>
+            <th>余额</th>
+            <th>分成比例</th>
+            <th>描述</th>
+            {{  if  eq (call $.GetCookie "opr_type" )  "0" }}
+            <th>操作</th>
+            {{end}}
+          </tr>
+        </thead>
+        <tbody>
+          {{range .AgencyList }}
+          <tr>
+            <td>{{.Name}}</td>
+            <td>{{.Contact}}</td>
+            <td>{{.Mobile}}</td>
+            <td>{{Fen2yuan  .Amount}}</td>
+            <td>{{.ShareRate}}</td>
+            <td>{{.Desc}}</td>
+            {{ if eq (call $.GetCookie "opr_type") "0" }}
+            <td>
+              <a class="btn  btn-xs btn-success" href="/agency/update?agency_id={.Id}}"><i class="fa fa-edit"></i>  修改</a>
+	      {{end}}
+
+              {{ if eq (call $.GetCookie "opr_type") "0" }}
+              <a class="btn  btn-xs btn-info " href="/agency/recharge?agency_id={{.Id}}">
+                <i class="fa fa-cny"></i> 充值</a>
+              {{end}}
+
+              {{ if eq (call $.GetCookie "opr_type") "0" }}
+              <a class="btn  btn-xs btn-warning" href="javascript:deleteAgency('{{.Id}}')"><i class="fa fa-times"></i>  删除</a>
+              
+            </td>
+            {{end}}
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

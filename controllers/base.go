@@ -194,12 +194,24 @@ func (this *BaseController) Validator2(form *models.Form ) bool{
 		m := libs.Getdict(cld) // struct to map
 		//fmt.Println(_cld)
 		//fmt.Println(reflect.ValueOf(cld))
-		_form_val := this.GetString( m["Name"] )
-		fmt.Println("Validator form value: ", _form_val)
-		if len(_form_val) > 0{
-			_vcld.MethodByName("SetValue").Call([]reflect.Value{reflect.ValueOf(_form_val) })
+		//fmt.Println(m["Type"],m["Multiple"])
+
+		// for groupdropdown 
+		if m["Type"] == "select" && m["Multiple"] == "true" {
+			_form_val := this.GetStrings( m["Name"] )
+			if len(_form_val) > 0 {
+				_vcld.MethodByName("SetValue").CallSlice([]reflect.Value{reflect.ValueOf(_form_val) })
+			}
+			
+		}else {
+			_form_val := this.GetString( m["Name"] )
+			if len(_form_val) > 0{
+				_vcld.MethodByName("SetValue").Call([]reflect.Value{reflect.ValueOf(_form_val) })
+			}
+			
+			
 		}
-		
+//		fmt.Println("Validator form value: ", _form_val)
 		_cvf := _cld.FieldByName("Valid")		
 		if _cvf.IsValid() == true{
 
@@ -308,6 +320,7 @@ func (this *BaseController) Toast(title string, msg string) string {
 
 func (this *BaseController) ShowTips( msg interface{} ){
 	this.Layout = "tips.tpl"
+	this.TplName = "tips.html"
 	this.Data["Form"] = fmt.Sprintf("%v",msg)
 }
 
@@ -410,4 +423,16 @@ func (this *BaseController) Items(v interface{},list []string ) [][]string {
 	}
 
 	return ret
+}
+
+
+func (this *BaseController) GetStringI(key string) int {
+
+	i,err := strconv.Atoi(this.GetString(key))
+	if err != nil {
+		return 0
+	}
+	if i<0 { i = 0 }
+	
+	return i
 }
