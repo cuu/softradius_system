@@ -124,7 +124,8 @@ func main() {
 		run_beego()
 	}else {
 		if *radius == true {
-		//	fmt.Println("Run radius server....")
+			//	fmt.Println("Run radius server....")
+			
 			rad.BeAuthServer("testing123")
 		}else if *radacct == true {
 			rad.BeAcctServer("testing123")

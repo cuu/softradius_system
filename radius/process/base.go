@@ -116,6 +116,9 @@ func (self *Entry) AuthHandler(w radius.ResponseWriter, p *radius.Packet) {
 		return
 	}
 
+	fmt.Println( string(p.Secret))
+
+	
 	self.Rw = &w
 	self.Pkt = p
 	log.Printf("%s with %s requesting access (%s #%d)\n", username,password, w.RemoteAddr(), p.Identifier)

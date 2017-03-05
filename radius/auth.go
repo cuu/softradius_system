@@ -35,8 +35,13 @@ func BeAuthServer(secret string ) {
 		Handler:    radius.HandlerFunc(entry.AuthHandler),
 		Secret:     []byte(secret),
 		Dictionary: radius.Builtin,
+		Addr:		":1812",
 	}
 
+	clm := GetClientsMap()
+	log.Println(clm)
+	server.AddClientsMap( clm )
+	
 	log.Println("Radauth server starting ", secret)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)

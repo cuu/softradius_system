@@ -27,6 +27,10 @@ func BeAcctServer( secret string ) {
 		Addr:		":1813",
 	}
 
+	clm := GetClientsMap()
+	log.Println(clm)
+	acct_server.AddClientsMap( clm )
+	
 	if err := acct_server.ListenAndServe(); err != nil{
 		log.Fatal(err)
 	}
