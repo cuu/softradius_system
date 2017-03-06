@@ -436,3 +436,15 @@ func (this *BaseController) GetStringI(key string) int {
 	
 	return i
 }
+
+func (this *BaseController) GetStringF(key string) float64 {
+
+	i,err := strconv.ParseFloat(this.GetString(key),64)
+	if err != nil {
+		return 0.0
+	}
+	if i<0.0 { i = 0.0 }
+	
+	return i
+}
+

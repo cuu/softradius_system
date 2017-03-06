@@ -9,12 +9,15 @@ import (
 	"github.com/cuu/softradius/libs/times"
 	"fmt"
 	"reflect"
+	"math"
 	"github.com/astaxie/beego"
 
 //	sort "github.com/cuu/softradius/libs/sortutil"
 	rdb  "github.com/cuu/softradius/database/shelf"
 	
 )
+
+var UserState = map[int]string{1: "正常", 2: "停机", 3: "销户", 4: "到期"}
 
 type BusController struct {
 	BaseController
@@ -31,17 +34,18 @@ type AcceptLog struct {
 	AcceptTime   string  // 2017-02-12 15:32:41
 }
 
+//Member order
 type OrderLog struct{
 	Id        string `gorethink:"id,omitempty"`
-	MemberId  string
-	ProductId string
+	MemberId  string //GeneratedKeys
+	ProductId string //
 	OrderFee  int
 	ActualFee int
-	PayStatus int
+	PayStatus int    // normally it's 1
 	AcceptId  string // from AcceptLog
-	OrderSource string
+	OrderSource string //
 	OrderDesc   string
-	CreateTime  string
+	CreateTime  string // 2017-02-12 15:32:41	
 }
 
 	
@@ -78,6 +82,7 @@ type Members struct {
 	IpAddress      string
 	VlanId         int
 	VlanId2        int
+	ActiveCode     string  // an uuid 
 	LastPause      string
 	ExpireDate     string //格式 Y-m-d ,与 MAX_EXPIRE_DATE 一致	
 	CreateTime     string
@@ -121,10 +126,8 @@ func (this *BusController) AddRoutes() {
 			beego.Router(v.Path, this)
 		}
 		
-		if v.Is_menu {
-			//Permits.routes is map,so no confict path key ! 
-			r.Permits.Add_route(v.Path,&this.routes[i])
-		}
+		//Permits.routes is map,so no confict path key ! 
+		r.Permits.Add_route(v.Path,&this.routes[i])
 	}
 	
 }
@@ -283,21 +286,212 @@ func (this *BusController) Members () {
 }
 
 
-func (this *BusController) MemberCreateForm(nodes [][]string, pdus [][]string  ) *models.Form {
-	f := models.InfoForm("Memeber create","/memeber/create")
+func (this *BusController) MemberCreateForm(nodes [][]string, pdus [][]string ,agencies [][]string ,user_state [][]string ) *models.Form {
+	
+	f := models.InfoForm("Memeber create","/member/create",
+		models.Dropdown(&models.Select{Name:"NodeId",Description:"区域",Args:nodes}),
+		models.Dropdown(&models.Select{Name:"ProductId",Description:"资费",Args:pdus}),
+		models.TextBox(&models.Input{Name:"RealName",Description:"用户姓名",Required:true,Valid:models.Len_of(2,32),Value:"User"}),
+		models.Dropdown(&models.Select{Name:"AgencyId",Description:"代理",Args:agencies}),
+		models.TextBox(&models.Input{Name:"IdCard",Description:"证件号码",Valid:models.Len_of(0,32)}),
+		models.TextBox(&models.Input{Name:"Mobile",Description:"用户手机号码",Valid:models.Len_of(0,32)}),
+		models.TextBox(&models.Input{Name:"Address",Description:"用户地址"}),
+		models.Hr(&models.Input{}),
+		models.TextBox(&models.Input{Name:"Name",Description:"用户帐号",Required:true,Valid:models.Len_of(2,128)}),
+		models.TextBox(&models.Input{Name:"Password",Description:"认证密码",Required:true,Valid:models.Len_of(6,32)}),
+		models.TextBox(&models.Input{Name:"IpAddress",Description:"用户IP地址"}),
+		models.TextBox(&models.Input{Name:"Months",Valid:models.Is_number,Description:"月数(包月有效)",Required:true}),
+		models.TextBox(&models.Input{Name:"FeeValue",Valid:models.Is_rmb,Description:"缴费金额",Required:true}),
+		models.TextBox(&models.Input{Name:"ExpireDate",Description:"过期日期",Required:true,ReadOnly:true,Valid:models.Is_date}),
+		models.Dropdown(&models.Select{Name:"Status",Description:"用户状态",Args:user_state}),
+		models.TextArea(&models.Input{Name:"Desc",Description:"用户描述"}),
+		models.Submit(&models.Input{Name:"Submit",Value:"<b>提交</b>",Class:"btn btn-info"}) )
+	
 	return f
 	
 }
 
 func (this *BusController) MemberCreate() {
-
-	/*
 	nods := this.NodeList()
 	pdus := this.ProductList()
+	agcs := this.AgencyList()
+	var user_state [][]string
+	
 	allnodes := this.Items(nods,[]string{"Id","Name"})
 	allproducts := this.Items(pdus,[]string{"Id","Name"})
+	agcs_items := this.Items(agcs,[]string{"Id","Name"})
 
-	*/
+	var allagency [][]string
+	allagency = append(allagency,[]string{"0",""})
+	allagency = append(allagency,agcs_items...)
+	
+	for i:=1; i <= len(UserState); i++ {
+		v := UserState[i]
+		a := []string{strconv.Itoa(i),v}
+		user_state = append(user_state,a)
+	}
+
+	f:= this.MemberCreateForm(allnodes,allproducts,allagency,user_state)
+	this.TplName = "bus_open_form.html"
+	
+	if this.Ctx.Input.IsPost() {
+
+		fmt.Println("in post")
+		if this.Validator2(f) == false {
+			this.Data["Form"] = f
+			this.Render()
+			return
+		}
+		
+		agc_id := this.GetString("AgencyId")
+		agc := &Agency{}
+		one := &Members{}
+		order_log := &OrderLog{}
+		accept_log := &AcceptLog{}
+		feevalue := math.Ceil(this.GetStringF("FeeValue"))
+		
+		fmt.Println("FeeValue is :", feevalue)
+		
+		if len(agc_id) > 32 {  // With agency 
+			err := rdb.DataBase().QuOne(agc,agc_id)	
+			if err == nil {
+				if agc.Amount < libs.Yuan2fen( int(feevalue) ) {
+					this.ShowTips("代理商金额不足")
+					this.Render()
+					return
+				}
+			}else {
+				this.ShowTips("代理商信息错误")
+				this.Render()
+				return
+			}
+			
+			
+		}else { //没有代理商
+			fmt.Println("no agency")
+		}
+
+		balance     := 0
+		order_fee   := 0
+		expire_date := this.GetString("ExpireDate")
+		
+		this.ParsePostToStruct(one)
+		for _,p := range pdus {
+			if one.ProductId == p.Id {
+				one.ConcurNumber = p.ConcurNumber
+				
+				if p.Policy == r.PPMonth {
+					months := this.GetStringI("Months")
+					order_fee = p.FeePrice *  months
+					
+				}else if libs.In(p.Policy, r.BOMonth,r.BOTimes){
+					order_fee = p.FeePrice
+				}else if libs.In(p.Policy,r.PPTimes,r.PPFlow) {
+					balance = libs.Yuan2fen( int(feevalue))
+					expire_date = r.MAX_EXPIRE_DATE
+				}else if p.Policy == r.AwesomeFee {
+					expire_date = r.MAX_EXPIRE_DATE
+				}else if p.Policy ==r.AwesomeFeeBoTime {
+					expire_date = r.MAX_EXPIRE_DATE
+					order_fee = p.FeePrice
+				}
+				break
+			}
+		}
+		
+		one.CreateTime   = libs.Get_currtime()
+		one.UpdateTime   = libs.Get_currtime()
+		one.Balance      = balance
+		one.ActiveCode,_ = libs.NewUUID()
+		one.ExpireDate   = expire_date
+		
+		_,cnt := rdb.DataBase().FilterInsert(one,"Name")
+		if cnt  == 0 {  // successfully fucked into
+			// insert accept log and order log
+			accept_log.AcceptType   = "open"
+			accept_log.AcceptSource = "console"
+			accept_log.Account      = one.Name
+			accept_log.AcceptTime   = one.CreateTime
+			accept_log.Operator     = this.GetCookie("username")
+			accept_log.AcceptDesc   = "用户新开帐号"
+			
+			rsp,err := rdb.DataBase().InsertQ(accept_log)
+			if err != nil { fmt.Println(err) }
+			
+			order_log.MemberId  = rsp[0]
+			order_log.ProductId = one.ProductId
+			order_log.OrderFee  = order_fee
+			order_log.ActualFee = libs.Yuan2fen( int(feevalue))
+			order_log.PayStatus = 1
+			order_log.AcceptId  = rsp[0]
+			order_log.OrderSource = "console"
+			order_log.OrderDesc  = "用户新开帐号"
+			order_log.CreateTime = one.CreateTime
+			
+			rsp,err = rdb.DataBase().InsertQ(order_log)
+			
+			if len(agc_id) > 32 {// Blow job, Do the Agency
+				//agency order 1,open account
+				//agency order 2,agency share cut
+				//agency share log...
+				agc_order1 := &AgencyOrder{}
+				agc_order2 := &AgencyOrder{}
+				agc_share  := &AgencyShare{}
+				
+				agc_order1.AgencyId      = agc_id
+				agc_order1.MemberOrderId = rsp[0]
+				agc_order1.FeeType       = "cost"
+				agc_order1.FeeValue      = libs.Yuan2fen( int(feevalue) )
+				agc_order1.FeeTotal      = (agc.Amount - agc_order1.FeeValue)
+				agc_order1.FeeDesc       = "代理商开户"
+				agc_order1.CreateTime    = libs.Get_currtime()
+				agc.Amount = agc_order1.FeeTotal
+				
+				rsp,err = rdb.DataBase().InsertQ(agc_order1)
+				
+				agc_order2.AgencyId      = agc_id
+				agc_order2.MemberOrderId = rsp[0]
+				agc_order2.FeeType       = "share"
+
+				
+				agc_order2.FeeValue      = agc_order1.FeeValue
+				rate := float64(float64(agc.ShareRate)/100.00)
+			//	fmt.Println(agc_order1.FeeValue, rate)
+				agc_order2.FeeValue = int(float64(agc_order1.FeeValue)*rate)
+			//	fmt.Println(agc_order2.FeeValue, rate)
+				
+				agc_order2.FeeTotal      = (agc.Amount + agc_order2.FeeValue)
+				agc_order2.FeeDesc       = "代理商分成"
+				agc_order2.CreateTime    = libs.Get_currtime()
+				agc.Amount = agc_order2.FeeTotal
+				rsp,err = rdb.DataBase().InsertQ(agc_order2)
+				
+				agc_share.AgencyId   = agc_id
+				agc_share.OrderId    = rsp[0]
+				agc_share.ShareRate  = agc.ShareRate
+				agc_share.ShareFee   = agc_order2.FeeValue
+				agc_share.CreateTime = libs.Get_currtime()
+				rsp,err = rdb.DataBase().InsertQ(agc_share)
+
+				//refresh the amount
+				fmt.Println(agc.Amount)
+				rdb.DataBase().Update(agc_id,agc)
+				
+			}
+			this.Redirect("/members", 302)
+		}else {
+			
+			this.ShowTips("用户名有重复 "+strconv.Itoa(cnt) +"个" )
+			this.Render()
+			return
+		}
+
+		this.Render()
+		return
+		
+	}
+
+	this.Data["Form"] = f
 	
 	this.Render()
 }

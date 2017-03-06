@@ -492,7 +492,7 @@ func (this *SysController) SysNodeAdd(){
 		cnt := rdb.DataBase().FilterCount(Node{},shval)
 		fmt.Println(cnt)
 		if cnt == 0 {
-			resp,err := rdb.DataBase().Insert(Node{Name:this.GetString("Name"),Desc:this.GetString("Desc")},Node{})
+			resp,err := rdb.DataBase().InsertQ(Node{Name:this.GetString("Name"),Desc:this.GetString("Desc")})
 			if err == nil {
 				fmt.Println(resp.GeneratedKeys)
 			}

@@ -91,10 +91,8 @@ func (this *OptController) AddRoutes() {
 			beego.Router(v.Path, this)
 		}
 		
-		if v.Is_menu {
-			//Permits.routes is map,so no confict path key ! 
-			r.Permits.Add_route(v.Path,&this.routes[i])
-		}
+		//Permits.routes is map,so no confict path key ! 
+		r.Permits.Add_route(v.Path,&this.routes[i])
 	}
 	
 }

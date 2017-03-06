@@ -31,11 +31,11 @@ func init(){
 	_cate := r.MenuPlugin
 	
  	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/login",Name:"登录",Category:_cate,Is_menu :false, Order:1.2,Is_open:true, Methods:"*:Login"})
+		r.Route{Path:"/login",Name:"登录",Category:_cate,Is_menu :false, Order:1.2,Is_open:false, Methods:"*:Login"})
 
 
  	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/logout",Name:"登录",Category:_cate,Is_menu :false, Order:1.23,Is_open:true, Methods:"get:Logout"})
+		r.Route{Path:"/logout",Name:"登出",Category:_cate,Is_menu :false, Order:1.23,Is_open:false, Methods:"get:Logout"})
 
 	
  	_ctl.routes = append( _ctl.routes,
@@ -58,10 +58,8 @@ func (this *DefController) AddRoutes() {
 			beego.Router(v.Path, this)
 		}
 		
-		if v.Is_menu {
-			//Permits.routes is map,so no confict path key ! 
-			r.Permits.Add_route(v.Path,&this.routes[i])
-		}
+		//Permits.routes is map,so no confict path key ! 
+		r.Permits.Add_route(v.Path,&this.routes[i])
 	}
 	
 }

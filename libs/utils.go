@@ -12,7 +12,11 @@ import (
 	_ "github.com/mitchellh/mapstructure"
 	"github.com/cuu/softradius/libs/times"
 	"math"
+	"crypto/rand"
+	"io"
 )
+
+var _base_id int
 
 func RemoveSuffix(str string, suf string) string {
 	for {
@@ -241,7 +245,7 @@ func In( in interface{},  list ...interface{}) bool {
 //一般,乘法是int,除法是string
 func Fen2yuan(fen int ) string {
 	
-	v := float64(fen/100.00)
+	v := float64(float64(fen)/100.00)
 	return fmt.Sprintf("%.2f",v)
 }
 
@@ -329,3 +333,29 @@ func FmtOnlineTime(acct_start_time string) string {
 	}
 	
 }
+
+func NewUUID() (string, error) {
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		return "", err
+	}
+	// variant bits; see section 4.1.1
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+	// version 4 (pseudo-random); see section 4.1.3
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:]), nil
+}
+
+
+func GenOrderId() string {
+
+	if _base_id >= 9999 {
+		_base_id = 0
+	}
+	_base_id +=1
+	now := time.Now()
+	strTime := times.Format("YmdHis", now)
+	return fmt.Sprintf("%s%02d",strTime,_base_id)
+}
+

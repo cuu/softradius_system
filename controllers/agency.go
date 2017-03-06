@@ -24,15 +24,17 @@ const (
 	AGENCY_OPERATOR =2
 )
 
+//agency share cut logs
 type AgencyShare struct {
 	Id string `gorethink:"id,omitempty"`
-	OrderId  string
+	OrderId  string  /// orderId from AgencyOrder, with Type 'share'
 	AgencyId string
 	ShareRate int
 	ShareFee  int
 	CreateTime string
 }
 
+//Agency order logs
 type AgencyOrder struct{
 	Id string `gorethink:"id,omitempty"`
 	AgencyId string
@@ -108,10 +110,7 @@ func (this *AgencyController) AddRoutes() {
 			beego.Router(v.Path, this)
 		}
 		
-		if v.Is_menu {
-			//Permits.routes is map,so no confict path key ! 
-			r.Permits.Add_route(v.Path,&this.routes[i])
-		}
+		r.Permits.Add_route(v.Path,&this.routes[i])
 	}
 	
 }
