@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	"time"
 	r "github.com/cuu/softradius/routers"
 	"github.com/cuu/softradius/models"
 	"github.com/cuu/softradius/libs"
+	"github.com/cuu/softradius/libs/times"
 	"fmt"
 	//	"reflect"
 	"github.com/astaxie/beego"
@@ -11,6 +13,7 @@ import (
 //	sort "github.com/cuu/softradius/libs/sortutil"
 	"strconv"
 	"strings"
+	
 	
 )
 
@@ -373,28 +376,68 @@ func (this *AgencyController) AgencyDelete() {
 }
 
 
-
+// handle the search by golang self,not the database
 func (this *AgencyController) AgencyOrders() {
 
 	var orders []AgencyOrder
-		
+	var orders_swap []AgencyOrder
+	
+	var query_begin_time time.Time
+	var query_end_time  time.Time
+	
 	this.TplName = "agency_orders.html"
-
-	
 	rdb.DataBase().SkipGet2(&orders,0,3000) ///3000 max
-
-	fee_value_sum := 0
 	
-	for _,v := range orders {
+	fee_value_sum := 0
+
+	query_begin := this.GetString("query_begin_time") // + 00:00:00
+	query_end   := this.GetString("query_end_time")   // + 23:59:59
+	agency_id        := this.GetString("agency_id")
+	fee_type         := this.GetString("fee_type")
+
+	
+	if query_begin != "" {
+		query_begin_time = times.StrToLocalTime(query_begin + " 00:00:00")
+	}
+	
+	if query_end != "" {
+		query_end_time = times.StrToLocalTime(query_end + " 23:59:59")
+	}else {
+		query_end_time = time.Now()
+	}
+
+	var keys = make(map[int]int)
+	for i,v := range orders {
+		if fee_type != ""{
+			if v.FeeType != fee_type {
+				keys[i] = 1
+			}
+		}
+		if agency_id != "" {
+			
+			if v.AgencyId != agency_id {
+				keys[i] = 1
+			}
+		}
+		if query_begin != ""  && query_end != "" {
+			ot := times.StrToLocalTime(v.CreateTime)
+			if libs.TimeBetween(ot,query_begin_time, query_end_time) == false {
+				keys[i] = 1
+			}
+		}
 		fee_value_sum += v.FeeValue
 	}
+	for i,v := range orders {
+		if keys[i] != 1 {
+			orders_swap = append(orders_swap, v)
+		}
+	}
+	
 	agcs := this.AgencyList()
 	this.Data["AgencyList"] = agcs
 	this.Data["AgencyMap"]  =  this.ToPairMapS(agcs,[]string{"Id","Name"})
 	this.Data["FeeTypeMap"] = fee_types
-	this.Data["PostAgencyId"] = this.GetString("agency_id")
-	this.Data["PostFeeType"]  = this.GetString("fee_type")
-	this.Data["Orders"] = orders
+	this.Data["Orders"] = orders_swap
 	this.Data["FeeValueSum"] = fee_value_sum
 	this.Render()
 }

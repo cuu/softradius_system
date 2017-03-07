@@ -27,7 +27,7 @@
                 <div class="col-md-3">
                     <select id="agency_id" name="agency_id" class="form-control input-sm" >
                         {{ range .AgencyList }}
-                          <option value="{{.Id}}" {{ if eq (Str .Id) $.PostAgencyId}} selected {{end}} >{{.Name}}</option>
+                          <option value="{{.Id}}" {{ if eq (Str .Id) (call $.Post "agency_id")}} selected {{end}} >{{.Name}}</option>
                         {{end}}
                     </select>
                 </div>  
@@ -35,10 +35,10 @@
                 <div class="col-md-3">
                     <select id="fee_type" name="fee_type" class="form-control input-sm" >
                         <option value=""></option>
-                        <option value="recharge" {{if eq (Str $.PostFeeType) "recharge"}} selected {{end}} >余额充值</option>
-                        <option value="share" {{if eq (Str $.PostFeeType) "share"}} selected {{end}}>收入分成</option>
-                        <option value="cost" {{if eq (Str $.PostFeeType) "cost"}} selected {{end}}>费用扣除</option>
-                        <option value="sharecost" {{if eq  (Str .PostFeeType) "sharecost"}} selected {{end}}>费用分摊</option>
+                        <option value="recharge" {{if eq (call $.Post "fee_type") "recharge"}} selected {{end}} >余额充值</option>
+                        <option value="share" {{if eq (call $.Post "fee_type") "share"}} selected {{end}}>收入分成</option>
+                        <option value="cost" {{if eq (call $.Post "fee_type") "cost"}} selected {{end}}>费用扣除</option>
+                        <option value="sharecost" {{if eq  (call $.Post "fee_type") "sharecost"}} selected {{end}}>费用分摊</option>
                     </select>
                 </div>  
             </div>
@@ -64,7 +64,7 @@
         <tbody>         
             {{ range .Orders }}
             <tr>
-                <td>{{map_get $.AgencyMap .AgencyId}}</td>
+                <td>{{map_get $.AgencyMap  .AgencyId}}</td>
                 <td>{{map_get $.FeeTypeMap .FeeType}}</td>
                 <td>{{Fen2yuan .FeeValue}}</td>
                 <td>{{Fen2yuan .FeeTotal}}</td>
@@ -89,8 +89,8 @@
 
    <script>
     $(document).ready(function(){
-        $("#query_begin_time").datepicker();
-        $("#query_end_time").datepicker();
+        $("#query_begin_time").datepicker({format: 'yyyy-mm-dd',});
+        $("#query_end_time").datepicker({format: 'yyyy-mm-dd',endDate:"+1d"});
         $('#maintable').dataTable({
           "bPaginate": true,
           "bLengthChange": false,

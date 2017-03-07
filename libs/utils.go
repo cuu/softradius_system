@@ -352,6 +352,13 @@ func FmtOnlineTime(acct_start_time string) string {
 	
 }
 
+func TimeBetween(frame time.Time, begin time.Time, end time.Time ) bool {
+	if frame.After(begin) && frame.Before(end) {
+		return true
+	}
+
+	return false 
+}
 func NewUUID() (string, error) {
 	uuid := make([]byte, 16)
 	n, err := io.ReadFull(rand.Reader, uuid)

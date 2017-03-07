@@ -90,6 +90,13 @@ func (this *BaseController) ResetLayout(){
 	this.LayoutSections["HeadCss"] = "head_css.tpl"
 }
 
+func (this *BaseController) InPost() bool {
+	return this.Ctx.Input.IsPost()
+}
+
+func (this *BaseController) InGet() bool {
+	return this.Ctx.Input.IsGet()
+}
 
 func (this *BaseController) GET(key string ) string {
 	if this.Ctx.Input.IsGet() {
