@@ -1,2 +1,11 @@
-[]
+[
+{
+"CoaPort": 3799 ,
+"IpAddr":  "127.0.0.1" ,
+"Name":  "localhost" ,
+"Secret":  "testing123" ,
+"TimeType": 0 ,
+"VendorId": 1 
+}
+]
 

@@ -1,0 +1,138 @@
+
+<div class="box box-default">
+  <div class="box-header">
+    <i class="fa fa-rmb"></i>
+    <h3 class="box-title">代理分成统计</h3>
+    <div class="bar pull-right">
+      <a href="javascript:window.location.reload();"><i class="fa fa-refresh"></i> 刷新</a>
+    </div>              
+  </div>
+  <div class="box-body">
+    <div class="container">
+      <form id="query_form" class="form-horizontal form-well" role="form" action="/agency/share" method="post">
+
+        <div class="form-group">
+          <label for="node_id" class="col-md-2 control-label">区域</label>
+          <div class="col-md-3">
+            <select id="node_id" name="node_id" class="form-control input-sm" >
+              <option value=""></option>
+              {{ range .NodeList }}
+              <option value="{{.Id}}"  {{if eq (Str .Id) (call $.Post "node_id") }} selected {{end}}>{{.Desc}}</option>
+              {{end}}
+            </select>
+          </div>  
+          <label for="product_id" class="col-md-2 control-label">资费</label>
+          <div class="col-md-3">
+            <select id="product_id" name="product_id" class="form-control input-sm" >
+              <option value=""></option>
+              {{ range .Products }}
+              <option value="{{.Id}}"  {{if eq (Str .Id) (call $.Post "product_id")}} selected {{end}}>{{.Name}}</option>
+              {{end}}
+            </select>
+          </div> 
+        </div>               
+        <div class="form-group">
+          <label for="query_begin_time" class="col-md-2 control-label">开始时间</label>
+
+          <div class="col-md-3">
+            <input type="text" id="query_begin_time" name="query_begin_time" value="{{call $.Post "query_begin_time"}}" class="form-control input-sm form_datetime"  >
+          </div>
+          <label for="query_end_time" class="col-md-2 control-label">结束时间</label>
+          <div class="col-md-3">
+            <input type="text" id="query_end_time" name="query_end_time" value="{{call $.Post "query_end_time"}}"  class="form-control input-sm form_datetime">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="agency_id" class="col-md-2 control-label">代理商</label>
+          <div class="col-md-3">
+            <select id="agency_id" name="agency_id" class="form-control input-sm" >
+              {{ range .AgencyList }}
+              <option value="{{.Id}}" {{if eq (Str .Id) (call $.Post "agency_id")}} selected {{end}}>{{.Name}}</option>
+              {{end}}
+            </select>
+          </div>  
+          <div class="col-md-7">
+            <button type="button" onclick="do_submit();" class="btn btn-sm bg-navy">查询</button>
+            <button type="button" onclick="$('input').val('');" class="btn btn-sm bg-navy">重置</button>
+            {{ if (call $.Match "/agency/share/export") }}
+            <a href="javascript:do_export();" class="btn btn-sm bg-navy">
+              <i class="fa fa-sign-out"></i> 导出数据</a>
+            {{end}}
+          </div>
+        </div>
+      </form>
+
+      <table class="table" id="maintable">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>区域</th>
+            <th>代理商</th>
+            <th>资费</th>
+            <th>总金额</th>
+            <th>分成总额</th>
+          </tr>   
+        </thead>
+        <tbody>         
+
+          {{ range .AgencyShares }}
+          <tr>
+            <td>{{.CreateTime}}</td>
+            <td>{{map_get $.NodeDescMap .NodeId    }}</td>
+            <td>{{map_get $.AgencyMap   .AgencyId  }}</td>
+            <td>{{map_get $.ProductMap  .ProductId }}</td>
+            <td>{{Fen2yuan .FeeValue }}</td>
+            <td>{{Fen2yuan .ShareFee }}</td>
+
+          </tr>
+          {{end}}
+
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="4">合计</th>
+	    
+            <th>{{Fen2yuan .fee_value_total }}</th>
+            <th>{{Fen2yuan .fee_share_total }}</th>
+	    
+          </tr>
+        </tfoot>
+      </table>  
+    </div>
+  </div>
+</div>
+
+   <script>
+    $(document).ready(function(){
+        $("#query_begin_time").datepicker();
+        $("#query_end_time").datepicker();
+        $('#maintable').dataTable({
+          "bPaginate": true,
+          "bLengthChange": false,
+          "bFilter": false,
+          "bSort": true,
+          "bInfo": false,
+          "bAutoWidth": false,
+          "pagingType":   "full_numbers",
+          "oLanguage": {
+                "sZeroRecords": "没有找到符合条件的数据",
+                "oPaginate": {
+                "sFirst": "首页",
+                "sPrevious": "前一页",
+                "sNext": "后一页",
+                "sLast": "尾页"
+                }
+            }
+        });
+    });
+    function do_submit(){
+        $("#query_form").attr("action", "/guuagency/agencyshare");
+        $("#query_form").submit();
+    }
+    function do_export(){
+        $("#query_form").attr("action", "/guuagency/agencyshare_export");
+        $("#query_form").submit();
+        setTimeout(function(){$("#query_form").attr("action", "/guuagency/agencyshare");}, 0);
+    }
+   </script>
+    

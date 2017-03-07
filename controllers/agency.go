@@ -32,10 +32,13 @@ const (
 //agency share cut logs
 type AgencyShare struct {
 	Id string `gorethink:"id,omitempty"`
-	OrderId  string  /// orderId from AgencyOrder, with Type 'share'
-	AgencyId string
+	OrderId   string  /// orderId from AgencyOrder, with Type 'share'
+	AgencyId  string
+	NodeId    string  // nodeid of this time record
+	ProductId string  // pdu id of this time record 
 	ShareRate int
 	ShareFee  int
+	FeeValue  int  // the money  where cut from
 	CreateTime string
 }
 
@@ -43,7 +46,7 @@ type AgencyShare struct {
 type AgencyOrder struct{
 	Id string `gorethink:"id,omitempty"`
 	AgencyId string
-	MemberOrderId string
+	MemberOrderId string // from bussiness OrderLog
 	FeeType  string
 	FeeValue int
 	FeeTotal int
@@ -159,8 +162,8 @@ func (this *AgencyController) AgencyOpenForm(nodes [][]string ,pdus [][]string) 
 		models.TextBox(&models.Input{Name:"ShareRate",Valid:models.Is_number,Description:"分成比例1-100",Required:true }),
 		models.TextBox(&models.Input{Name:"OperatorName",Valid:models.Len_of(2,255),Description:"操作员帐号",Required:true }),
 		models.TextBox(&models.Input{Name:"OperatorPass",Valid:models.Len_of(2,32),Description:"操作员密码",Required:true }),
-		models.GroupDropdown(&models.Select{Name:"Nodes",Args:nodes,Required:true,Size:4}),
-		models.GroupDropdown(&models.Select{Name:"Products",Args:pdus,Required:true,Size:6}),
+		models.GroupDropdown(&models.Select{Name:"Nodes",Description:"关联区域(多选)",Args:nodes,Required:true,Size:4}),
+		models.GroupDropdown(&models.Select{Name:"Products",Description:"关联资费(多选)",Args:pdus,Required:true,Size:6}),
 		models.TextArea(&models.Input{Name:"Desc",Description:"代理商描述",Size:4}),
 		models.Submit(&models.Input{Name:"Submit",Value:"<b>提交</b>",Class:"btn btn-info"}),
 	)
@@ -444,6 +447,31 @@ func (this *AgencyController) AgencyOrders() {
 
 func (this *AgencyController) AgencyShares() {
 
+	var share []AgencyShare
+	//var share_swap []AgencyShare
+	
+//	var query_begin_time time.Time
+//	var query_end_time  time.Time
+	
+	this.TplName = "agency_shares.html"
+	rdb.DataBase().SkipGet2(&share,0,3000) ///3000 max
+	nods := this.NodeList()
+	pdus := this.ProductList()
+	agcs := this.AgencyList()
+
+	this.Data["AgencyList"]   = agcs
+	this.Data["AgencyShares"] = share
+	this.Data["NodeDescMap"]  = this.ToPairMapS(nods,[]string{"Id","Desc"})
+	this.Data["AgencyMap"]    = this.ToPairMapS(agcs,[]string{"Id","Name"})
+	this.Data["ProductMap"]   = this.ToPairMapS(pdus,[]string{"Id","Name"})
+	
+	this.Data["fee_value_total"] = 0
+	this.Data["fee_share_total"] = 0
+	
+
+	this.Render()
+
+	
 }
 
 

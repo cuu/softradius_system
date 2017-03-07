@@ -227,6 +227,37 @@ func Or(in interface{}, other interface{} ) interface{} {
 	return ""
 }
 
+func InSlice(in interface{}, list interface{} ) bool {
+	ret := false
+	if in == nil {
+		in = ""
+	}
+	t := Type(in)
+	switch t {
+	case "string":
+		tv := reflect.ValueOf(in).String()
+		for _,l := range list.([]string) {
+			v:= reflect.ValueOf(l)
+			if tv == v.String() {
+				ret = true
+				break
+			}
+		}
+	
+	case "int":
+		tv := reflect.ValueOf(in).Int()
+		for _,l := range list.([]int) {
+			v := reflect.ValueOf(l)
+			if tv == v.Int() {
+				ret = true
+				break
+			}
+		}
+	}
+	
+	return ret	
+}
+
 func In( in interface{},  list ...interface{}) bool {
 	fmt.Print("In: ",in ," ")
 	fmt.Println("List: ",list)

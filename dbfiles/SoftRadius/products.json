@@ -1,2 +1,38 @@
-[]
+[
+{
+"Attrs": [ ],
+"BindMac": 0 ,
+"BindVlan": 0 ,
+"ConcurNumber": 0 ,
+"CreateTime":  "2017-03-07 23:37:37" ,
+"FeeFlows": 0 ,
+"FeeMonths": 0 ,
+"FeePeriod":  "" ,
+"FeePrice": 1100 ,
+"FeeTimes": 0 ,
+"InputMaxLimit": 0 ,
+"Name":  "预付费时长" ,
+"OutputMaxLimit": 0 ,
+"Policy": 1 ,
+"Status": 0 ,
+"UpdateTime":  "2017-03-07 23:37:37" 
+}, {
+"Attrs": [ ],
+"BindMac": 0 ,
+"BindVlan": 0 ,
+"ConcurNumber": 0 ,
+"CreateTime":  "2017-03-07 23:37:12" ,
+"FeeFlows": 0 ,
+"FeeMonths": 0 ,
+"FeePeriod":  "" ,
+"FeePrice": 1000 ,
+"FeeTimes": 0 ,
+"InputMaxLimit": 0 ,
+"Name":  "预付费包月" ,
+"OutputMaxLimit": 0 ,
+"Policy": 0 ,
+"Status": 0 ,
+"UpdateTime":  "2017-03-07 23:37:12" 
+}
+]
 

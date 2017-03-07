@@ -344,6 +344,7 @@ func (this *BusController) MemberCreate() {
 		
 		agc_id := this.GetString("AgencyId")
 		agc := &Agency{}
+		opr := &Operators{}
 		one := &Members{}
 		order_log := &OrderLog{}
 		accept_log := &AcceptLog{}
@@ -352,10 +353,18 @@ func (this *BusController) MemberCreate() {
 		fmt.Println("FeeValue is :", feevalue)
 		
 		if len(agc_id) > 32 {  // With agency 
-			err := rdb.DataBase().QuOne(agc,agc_id)	
+			err := rdb.DataBase().QuOne(agc,agc_id)
+			
 			if err == nil {
 				if agc.Amount < libs.Yuan2fen( int(feevalue) ) {
 					this.ShowTips("代理商金额不足")
+					this.Render()
+					return
+				}
+
+				err = rdb.DataBase().FilterOne(opr,map[string]string{"Name":agc.OperatorName})
+				if err != nil {
+					this.ShowTips("代理商操作员不存在")
 					this.Render()
 					return
 				}
@@ -373,8 +382,22 @@ func (this *BusController) MemberCreate() {
 		balance     := 0
 		order_fee   := 0
 		expire_date := this.GetString("ExpireDate")
-		
+
 		this.ParsePostToStruct(one)
+
+		
+		if libs.InSlice(one.NodeId, opr.Nodes) == false && len(agc_id) > 32 {
+			this.ShowTips("代理商在此区域无权新增用户")
+			this.Render()
+			return
+		}
+		
+		if libs.InSlice(one.ProductId, opr.Products) == false && len(agc_id) > 32 {
+			this.ShowTips("代理商在此资费下无权新增用户")
+			this.Render()
+			return
+		}
+		
 		for _,p := range pdus {
 			if one.ProductId == p.Id {
 				one.ConcurNumber = p.ConcurNumber
@@ -469,6 +492,9 @@ func (this *BusController) MemberCreate() {
 				agc_share.OrderId    = rsp[0]
 				agc_share.ShareRate  = agc.ShareRate
 				agc_share.ShareFee   = agc_order2.FeeValue
+				agc_share.FeeValue   = agc_order1.FeeValue
+				agc_share.NodeId     = one.NodeId
+				agc_share.ProductId  = one.ProductId
 				agc_share.CreateTime = libs.Get_currtime()
 				rsp,err = rdb.DataBase().InsertQ(agc_share)
 
