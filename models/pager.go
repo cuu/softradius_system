@@ -43,6 +43,7 @@ func (this *Pager) Init(total int, size int, page int,url string) {
 		_idx := int(i/10)
 		this.PageBar[_idx] = append( this.PageBar[_idx],i)
 	}
+	this.Total = total
 	
 	this.Page = page
 	this.Url = url

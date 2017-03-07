@@ -1,0 +1,113 @@
+      
+<div class="box box-default">
+        <div class="box-header">
+            <i class="fa fa-rmb"></i>
+            <h3 class="box-title">代理商交易查询</h3>
+            <div class="bar pull-right">
+             <a href="javascript:window.location.reload();"><i class="fa fa-refresh"></i> 刷新</a>
+            </div>              
+        </div>
+            <div class="box-body">
+            <div class="container">
+        <form id="query_form" class="form-horizontal form-well" role="form" action="/agency/order" method="post">
+
+            <div class="form-group">
+                <label for="query_begin_time" class="col-md-2 control-label">开始时间</label>
+
+                <div class="col-md-3">
+                    <input type="text" id="query_begin_time" name="query_begin_time" value="{{(call $.Post "query_begin_time")}}" class="form-control input-sm form_datetime"  >
+                </div>
+                 <label for="query_end_time" class="col-md-2 control-label">结束时间</label>
+                <div class="col-md-3">
+                    <input type="text" id="query_end_time" name="query_end_time" value="{{call $.Post "query_end_time" }}"  class="form-control input-sm form_datetime">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="agency_id" class="col-md-2 control-label">代理商</label>
+                <div class="col-md-3">
+                    <select id="agency_id" name="agency_id" class="form-control input-sm" >
+                        {{ range .AgencyList }}
+                          <option value="{{.Id}}" {{ if eq (Str .Id) $.PostAgencyId}} selected {{end}} >{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>  
+                <label for="fee_type" class="col-md-2 control-label">费用类型</label>
+                <div class="col-md-3">
+                    <select id="fee_type" name="fee_type" class="form-control input-sm" >
+                        <option value=""></option>
+                        <option value="recharge" {{if eq (Str $.PostFeeType) "recharge"}} selected {{end}} >余额充值</option>
+                        <option value="share" {{if eq (Str $.PostFeeType) "share"}} selected {{end}}>收入分成</option>
+                        <option value="cost" {{if eq (Str $.PostFeeType) "cost"}} selected {{end}}>费用扣除</option>
+                        <option value="sharecost" {{if eq  (Str .PostFeeType) "sharecost"}} selected {{end}}>费用分摊</option>
+                    </select>
+                </div>  
+            </div>
+            <div class="form-group">
+                <div class="col-md-offset-5 col-md-7">
+                    <button type="submit" class="btn btn-sm bg-navy">查询</button>
+                    <button type="button" onclick="$('input').val('');" class="btn btn-sm bg-navy">重置</button>
+                </div>
+            </div>
+        </form>
+
+        <table class="table" id="maintable">
+            <thead>
+            <tr>
+                <th>代理商</th>
+                <th>费用类型</th>
+                <th>交易金额</th>
+                <th>交易后余额</th>
+                <th>交易时间</th>
+                <th>交易描述</th>
+            </tr>   
+        </thead>
+        <tbody>         
+            {{ range .Orders }}
+            <tr>
+                <td>{{map_get $.AgencyMap .AgencyId}}</td>
+                <td>{{map_get $.FeeTypeMap .FeeType}}</td>
+                <td>{{Fen2yuan .FeeValue}}</td>
+                <td>{{Fen2yuan .FeeTotal}}</td>
+                <td>{{.CreateTime}}</td>
+                <td>{{.FeeDesc}}</td>
+            </tr>
+            {{end}}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="1">合计交易金额</th>
+                    <th>{{Fen2yuan .FeeValueSum }} 元</th>
+                    <th colspan="3"></th>
+                </tr>
+            </tfoot>
+        </table>  
+    </div>
+</div>
+</div>
+
+
+
+   <script>
+    $(document).ready(function(){
+        $("#query_begin_time").datepicker();
+        $("#query_end_time").datepicker();
+        $('#maintable').dataTable({
+          "bPaginate": true,
+          "bLengthChange": false,
+          "bFilter": false,
+          "bSort": true,
+          "bInfo": false,
+          "bAutoWidth": false,
+          "pagingType":   "full_numbers",
+          "oLanguage": {
+                "sZeroRecords": "没有找到符合条件的数据",
+                "oPaginate": {
+                "sFirst": "首页",
+                "sPrevious": "前一页",
+                "sNext": "后一页",
+                "sLast": "尾页"
+                }
+            }
+        });
+    });
+   </script>

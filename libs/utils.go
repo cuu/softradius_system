@@ -188,6 +188,24 @@ func FillStruct(m map[string]interface{}, s interface{}) error {
 	return nil
 }
 
+func Str(in interface{} ) string {
+	if in == nil {
+		in = ""
+	}
+	t := Type(in)
+	switch t {
+	case "string":
+		tv := reflect.ValueOf(in).String()
+		return tv
+	case "int":
+		tv := reflect.ValueOf(in).Int()
+		str := strconv.Itoa(int(tv))
+		return str
+	}
+	
+	return ""	
+}
+
 func Or(in interface{}, other interface{} ) interface{} {
 	if in == nil {
 		in = ""
@@ -201,7 +219,7 @@ func Or(in interface{}, other interface{} ) interface{} {
 		}
 	case "int":
 		tv := reflect.ValueOf(in).Int()
-		if tv == 0 {
+		if tv <= 0 {
 			return other
 		}
 	}

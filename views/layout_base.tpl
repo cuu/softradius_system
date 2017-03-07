@@ -34,6 +34,11 @@
   <script src="{{.adminlte}}/plugins/jQuery/jquery-2.2.3.min.js"></script>
   <!-- Bootstrap 3.3.6 -->
   <script src="{{.adminlte}}/bootstrap/js/bootstrap.min.js"></script>
+  <!-- datatables -->
+  <link rel="stylesheet" href="{{.adminlte}}/plugins/datatables/dataTables.bootstrap.css">
+  <script src="{{.adminlte}}/plugins/datatables/jquery.dataTables.min.js"></script>
+  <script src="{{.adminlte}}/plugins/datatables/dataTables.bootstrap.min.js"></script>
+    
   <!-- FastClick -->
   <script src="{{.adminlte}}/plugins/fastclick/fastclick.js"></script>
   <!-- AdminLTE App -->

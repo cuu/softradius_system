@@ -21,7 +21,6 @@ var UserState = map[int]string{1: "正常", 2: "停机", 3: "销户", 4: "到期
 
 type BusController struct {
 	BaseController
-	PerPage int
 }
 
 type AcceptLog struct {
@@ -443,7 +442,7 @@ func (this *BusController) MemberCreate() {
 				agc_order1.FeeType       = "cost"
 				agc_order1.FeeValue      = libs.Yuan2fen( int(feevalue) )
 				agc_order1.FeeTotal      = (agc.Amount - agc_order1.FeeValue)
-				agc_order1.FeeDesc       = "代理商开户"
+				agc_order1.FeeDesc       = ("代理商开户 "+one.Name)
 				agc_order1.CreateTime    = libs.Get_currtime()
 				agc.Amount = agc_order1.FeeTotal
 				
@@ -461,7 +460,7 @@ func (this *BusController) MemberCreate() {
 			//	fmt.Println(agc_order2.FeeValue, rate)
 				
 				agc_order2.FeeTotal      = (agc.Amount + agc_order2.FeeValue)
-				agc_order2.FeeDesc       = "代理商分成"
+				agc_order2.FeeDesc       = fmt.Sprintf("代理商分成 %s %f ",one.Name,rate)
 				agc_order2.CreateTime    = libs.Get_currtime()
 				agc.Amount = agc_order2.FeeTotal
 				rsp,err = rdb.DataBase().InsertQ(agc_order2)

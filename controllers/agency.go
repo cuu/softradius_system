@@ -14,6 +14,8 @@ import (
 	
 )
 
+var fee_types = map[string]string{"recharge":"余额充值","share":"收入分成","cost":"费用扣除", "sharecost":"费用分摊"}
+
 type AgencyController struct {
 	BaseController
 	Rules []string
@@ -221,9 +223,21 @@ func (this *AgencyController) AgencyOpen() {
 			agc.ShareRate = 0
 		}
 		
-		_,cnt = rdb.DataBase().FilterInsert(agc,"Name")
+		rsp,cnt := rdb.DataBase().FilterInsert(agc,"Name")
 		if cnt  == 0 {
-			this.Redirect("/agency", 302)
+			//this.Redirect("/agency", 302)
+			fmt.Println("new agency: ",rsp[0])
+			agc_order := &AgencyOrder{}
+			agc_order.AgencyId      = rsp[0]
+			agc_order.MemberOrderId = ""
+			agc_order.FeeType       = "recharge"
+			agc_order.FeeValue      = agc.Amount
+			agc_order.FeeTotal      = agc.Amount
+			agc_order.FeeDesc       = fmt.Sprintf("代理商 %s开户 ",agc.Name)
+			agc_order.CreateTime    = libs.Get_currtime()
+			
+			rdb.DataBase().InsertQ(agc_order)
+			
 		}else {
 			
 			this.ShowTips("代理名称有重复 "+strconv.Itoa(cnt) +"个" )
@@ -301,6 +315,17 @@ func (this *AgencyController) AgencyRecharge() {
 			resp,err := rdb.DataBase().Update(id,agc)
 			if err == nil {
 				fmt.Println("Replaced ",resp.Replaced )
+				agc_order := &AgencyOrder{}
+				agc_order.AgencyId      = agc.Id
+				agc_order.MemberOrderId = ""
+				agc_order.FeeType       = "recharge"
+				agc_order.FeeValue      = libs.Yuan2fen(fee_value)
+				agc_order.FeeTotal      = agc.Amount
+				agc_order.FeeDesc       = fmt.Sprintf("代理商 %s充值 ",agc.Name)
+				agc_order.CreateTime    = libs.Get_currtime()
+			
+				rdb.DataBase().InsertQ(agc_order)
+				
 			}else {
 				fmt.Println(err)
 			}
@@ -347,8 +372,31 @@ func (this *AgencyController) AgencyDelete() {
 	this.Render()			
 }
 
+
+
 func (this *AgencyController) AgencyOrders() {
+
+	var orders []AgencyOrder
+		
+	this.TplName = "agency_orders.html"
+
 	
+	rdb.DataBase().SkipGet2(&orders,0,3000) ///3000 max
+
+	fee_value_sum := 0
+	
+	for _,v := range orders {
+		fee_value_sum += v.FeeValue
+	}
+	agcs := this.AgencyList()
+	this.Data["AgencyList"] = agcs
+	this.Data["AgencyMap"]  =  this.ToPairMapS(agcs,[]string{"Id","Name"})
+	this.Data["FeeTypeMap"] = fee_types
+	this.Data["PostAgencyId"] = this.GetString("agency_id")
+	this.Data["PostFeeType"]  = this.GetString("fee_type")
+	this.Data["Orders"] = orders
+	this.Data["FeeValueSum"] = fee_value_sum
+	this.Render()
 }
 
 func (this *AgencyController) AgencyShares() {

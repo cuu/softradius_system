@@ -33,7 +33,8 @@ type BaseController struct {
 	routes []r.Route
 	Secret string /// secret for secure cookie
 	
-	
+	PerPage  int
+
 }
 
 
@@ -90,6 +91,22 @@ func (this *BaseController) ResetLayout(){
 }
 
 
+func (this *BaseController) GET(key string ) string {
+	if this.Ctx.Input.IsGet() {
+		return this.GetString(key)
+	}
+
+	return ""
+}
+
+func (this *BaseController) POST(key string) string {
+	if this.Ctx.Input.IsPost(){
+		return this.GetString(key)
+	}
+
+	return ""
+}
+
 func (this *BaseController) Prepare(){
 	this.Data["adminlte"] = "/AdminLTE"
 	
@@ -104,6 +121,9 @@ func (this *BaseController) Prepare(){
 	this.Data["CheckOprCate"] = this.CheckOprCategory
 
 	this.Data["YesOrNo"] = YESNO
+
+	this.Data["Get"]     = this.GET
+	this.Data["Post"]    = this.POST
 	
 	this.Layout = "layout_base.tpl"     
 	this.LayoutSections = make(map[string]string)
@@ -428,13 +448,14 @@ func (this *BaseController) Items(v interface{},list []string ) [][]string {
 
 func (this *BaseController) GetStringI(key string) int {
 
-	i,err := strconv.Atoi(this.GetString(key))
+	//	i,err := strconv.Atoi(this.GetString(key))
+	i, err := strconv.ParseInt(this.GetString(key),10,16)
 	if err != nil {
 		return 0
 	}
 	if i<0 { i = 0 }
 	
-	return i
+	return int(i)
 }
 
 func (this *BaseController) GetStringF(key string) float64 {

@@ -18,7 +18,6 @@ import (
 
 type DefController struct {
 	BaseController
-	PerPage  int
 }
 
 //每个controller 有这样的命名规则,保证不重复
@@ -164,7 +163,6 @@ func (this *DefController) Login_post() {
 func (this *DefController) QuickSearchMembers(qu string ,skip int )(int, []Members){
 	var nods []Members
 
-
 	rdb.DataBase().SearchSkipGetFunc(&nods,func(me re.Term)re.Term{
 		return me.Field("Name").Match(qu)
 	}, skip,this.PerPage)
@@ -174,30 +172,38 @@ func (this *DefController) QuickSearchMembers(qu string ,skip int )(int, []Membe
 	return total,nods
 }
 
+
+func (this *BaseController) MakePager(total int, page int){
+	
+	if page >= 0 {
+		url := libs.RemoveSuffix(this.Ctx.Input.URI(),"/")
+		pg   := models.NewPager(total,this.PerPage, page,url)	
+		this.Data["Paginator"] = pg.Render()
+	}
+	
+}
+
 func (this *DefController) QuickSearch() {
 
 	query := this.GetString("q")
-	page ,_ := strconv.ParseInt(this.GetString("page_id"),10,16)
-
-	if page <= 0 { page = 1}
+	
 	if query == "" {
 		this.Abort("403")
 	}
 	
 	nods := this.NodeList()
 	pdus := this.ProductList()
-	
-	total,mbms := this.QuickSearchMembers(query, int(page-1)*this.PerPage )
+
+	page := this.GetStringI("page_id")
+//	if page <= 0 { page = 1}
+	total,mbms := this.QuickSearchMembers(query, libs.Or(int(page-1),0).(int)*this.PerPage )
+	this.MakePager(total,page)
 	
 	this.Data["MemberList"] = mbms
 	this.Data["ProductMap"] = this.ToPairMapS(pdus,[]string{"Id","Name"})
 	this.Data["NodeMap"]    = this.ToPairMapS(nods,[]string{"Id","Name"})
 	this.Data["IsExpire"]  = libs.IsExpire
-	if page >= 0 {
-		url := libs.RemoveSuffix(this.Ctx.Input.URI(),"/")
-		pg   := models.NewPager(total,this.PerPage, int(page),url)	
-		this.Data["Paginator"] = pg.Render()
-	}
+	
 	this.ResetLayout()
 	this.TplName ="bus_member_list.html"
 

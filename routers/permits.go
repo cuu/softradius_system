@@ -133,6 +133,7 @@ func init() {
 	
 	beego.AddFuncMap("In",      libs.In)
 	beego.AddFuncMap("Or",      libs.Or)
+	beego.AddFuncMap("Str",     libs.Str)
 }
 
 func (r *Route) GetOprs() []string {
