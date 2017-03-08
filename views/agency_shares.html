@@ -46,6 +46,7 @@
           <label for="agency_id" class="col-md-2 control-label">代理商</label>
           <div class="col-md-3">
             <select id="agency_id" name="agency_id" class="form-control input-sm" >
+	      <option value=""></option>
               {{ range .AgencyList }}
               <option value="{{.Id}}" {{if eq (Str .Id) (call $.Post "agency_id")}} selected {{end}}>{{.Name}}</option>
               {{end}}
@@ -126,7 +127,7 @@
         });
     });
     function do_submit(){
-        $("#query_form").attr("action", "/guuagency/agencyshare");
+        $("#query_form").attr("action", "/agency/share");
         $("#query_form").submit();
     }
     function do_export(){

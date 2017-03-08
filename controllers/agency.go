@@ -448,25 +448,83 @@ func (this *AgencyController) AgencyOrders() {
 func (this *AgencyController) AgencyShares() {
 
 	var share []AgencyShare
-	//var share_swap []AgencyShare
+	var share_swap []AgencyShare
 	
-//	var query_begin_time time.Time
-//	var query_end_time  time.Time
+	var query_begin_time time.Time
+	var query_end_time  time.Time
+	
+	fee_value_total := 0
+	fee_share_total := 0
+	
+	query_begin := this.GetString("query_begin_time") // + 00:00:00
+	query_end   := this.GetString("query_end_time")   // + 23:59:59
+	agency_id   := this.GetString("agency_id")
+	node_id     := this.GetString("node_id")
+	product_id  := this.GetString("product_id")
+	
+	if query_begin != "" {
+		query_begin_time = times.StrToLocalTime(query_begin + " 00:00:00")
+	}
+	
+	if query_end != "" {
+		query_end_time = times.StrToLocalTime(query_end + " 23:59:59")
+	}else {
+		query_end_time = time.Now()
+	}
+
 	
 	this.TplName = "agency_shares.html"
+	
 	rdb.DataBase().SkipGet2(&share,0,3000) ///3000 max
+	var keys = make(map[int]int)
+	for i,v := range share {
+		if node_id != "" {
+			if v.NodeId != node_id {
+				keys[i] = 1
+			}
+		}
+		if product_id != "" {
+			if v.ProductId != product_id {
+				keys[i] = 1
+			}
+		}
+		if agency_id != "" {
+			if v.AgencyId != agency_id {
+				keys[i] = 1
+			}
+		}
+		if query_begin != ""  && query_end != "" {
+			ot := times.StrToLocalTime(v.CreateTime)
+			if libs.TimeBetween(ot,query_begin_time, query_end_time) == false {
+				keys[i] = 1
+			}
+		}
+		
+		fee_value_total += v.FeeValue
+		fee_share_total += v.ShareFee
+	}
+
+	for i,v := range share {
+		if keys[i] != 1 {
+			share_swap = append(share_swap, v)
+		}
+	}
+	
 	nods := this.NodeList()
 	pdus := this.ProductList()
 	agcs := this.AgencyList()
 
+	this.Data["NodeList"]     = nods
+	this.Data["Products"]     = pdus
 	this.Data["AgencyList"]   = agcs
-	this.Data["AgencyShares"] = share
+	this.Data["AgencyShares"] = share_swap
 	this.Data["NodeDescMap"]  = this.ToPairMapS(nods,[]string{"Id","Desc"})
 	this.Data["AgencyMap"]    = this.ToPairMapS(agcs,[]string{"Id","Name"})
 	this.Data["ProductMap"]   = this.ToPairMapS(pdus,[]string{"Id","Name"})
+
 	
-	this.Data["fee_value_total"] = 0
-	this.Data["fee_share_total"] = 0
+	this.Data["fee_value_total"] = fee_value_total
+	this.Data["fee_share_total"] = fee_share_total
 	
 
 	this.Render()
