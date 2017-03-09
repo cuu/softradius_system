@@ -452,6 +452,14 @@ func (this *BaseController) Items(v interface{},list []string ) [][]string {
 	return ret
 }
 
+func (this *BaseController) InitPage() *models.Pager {
+	
+	page := this.GetStringI("page_id")
+//	if page == 0 {	page = 1 }
+	return models.InitPage(page,this.PerPage,this.Ctx.Input.URI() )
+}
+
+
 
 func (this *BaseController) GetStringI(key string) int {
 

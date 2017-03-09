@@ -82,14 +82,15 @@ var ACCEPT_TYPES = map[string]string{
 
 const (
 	MenuSys    = "系统管理" // 0
-	MenuBus    = "营业管理"
-	MenuOpt    = "维护管理"
-	MenuStat   = "统计分板"
-	MenuWlan   = "Wlan管理"
-	MenuMpp    = "微信接入"
-	MenuPlugin = "插件管理"
-	MenuAgency = "代理管理" // 8
-	MenuSysMenu= "系统菜单" // 9
+	MenuBus    = "营业管理" // 1 
+	MenuOpt    = "维护管理" // 2
+	MenuStat   = "统计分板" // 3
+	MenuWlan   = "Wlan管理" // 4
+	MenuMpp    = "微信接入" // 5
+	MenuPlugin = "插件管理" // 6
+	MenuAgency = "代理管理" // 7
+	MenuSysMenu= "系统菜单" // 8
+	MenuRes    = "资源管理" // 9
 )
 
 /*
@@ -106,6 +107,7 @@ var MENU_ICONS = map[string]string{
 	MenuStat:"fa fa-bar-chart",
 	MenuPlugin:"fa fa-bar-chart",
 	MenuAgency:"fa fa-hand-spock-o",
+	MenuRes:"fa fa-cloud-download",
 }
 
 

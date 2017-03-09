@@ -6,29 +6,45 @@ import (
 	"strconv"
 	//"strings"
 	"net/url"
+	"github.com/cuu/softradius/libs"
 	
 )
 
 
 type Pager struct{
 	Page     int
+	PerPage  int
 	Total    int
 	PageSize int
 	PageNum  int
 	Url      string
 	PageBar map[int][]int
+
+	Start    int
+	End      int
 }
 
 
-func NewPager(total int, size int ,page int, url string) *Pager {
+func InitPage(page int,perpage int,url string) *Pager{
 	one := &Pager{}
-	one.Init(total,size,page,url)
-	
+	one.Page = page
+	one.PerPage = perpage
+	url = libs.RemoveSuffix(url,"/")
+	one.Url = url
 	return one
 }
 
+func (this *Pager) MakePager(total int) {
 
-func (this *Pager) Init(total int, size int, page int,url string) {
+	page := this.Page
+	
+	if page >= 0 {
+		this.Init(total,this.PerPage, page)		
+	}
+	
+}
+
+func (this *Pager) Init(total int, size int, page int) {
 	if total > 0 {
 		this.PageNum = int( math.Ceil( float64(total/size)) )
 	}else {
@@ -46,7 +62,6 @@ func (this *Pager) Init(total int, size int, page int,url string) {
 	this.Total = total
 	
 	this.Page = page
-	this.Url = url
 	
 }
 

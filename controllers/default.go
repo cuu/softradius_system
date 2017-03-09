@@ -163,6 +163,14 @@ func (this *DefController) Login_post() {
 func (this *DefController) QuickSearchMembers(qu string ,skip int )(int, []Members){
 	var nods []Members
 
+	/*
+resp, err := rdb.Table('user').
+Filter(rdb.Row.Field("role").Ne(90)).
+Filter(rdb.Row.Field("isDeleted").Ne(true)).
+Field("email").
+Run(database.Session())
+*/
+	
 	rdb.DataBase().SearchSkipGetFunc(&nods,func(me re.Term)re.Term{
 		return me.Field("Name").Match(qu)
 	}, skip,this.PerPage)
@@ -172,16 +180,6 @@ func (this *DefController) QuickSearchMembers(qu string ,skip int )(int, []Membe
 	return total,nods
 }
 
-
-func (this *BaseController) MakePager(total int, page int){
-	
-	if page >= 0 {
-		url := libs.RemoveSuffix(this.Ctx.Input.URI(),"/")
-		pg   := models.NewPager(total,this.PerPage, page,url)	
-		this.Data["Paginator"] = pg.Render()
-	}
-	
-}
 
 func (this *DefController) QuickSearch() {
 
@@ -194,15 +192,15 @@ func (this *DefController) QuickSearch() {
 	nods := this.NodeList()
 	pdus := this.ProductList()
 
-	page := this.GetStringI("page_id")
-//	if page <= 0 { page = 1}
-	total,mbms := this.QuickSearchMembers(query, libs.Or(int(page-1),0).(int)*this.PerPage )
-	this.MakePager(total,page)
+	page := this.InitPage()	
+	total,mbms := this.QuickSearchMembers(query, libs.Or(page.Page,0).(int)*this.PerPage )
+	page.MakePager(total)
 	
 	this.Data["MemberList"] = mbms
 	this.Data["ProductMap"] = this.ToPairMapS(pdus,[]string{"Id","Name"})
 	this.Data["NodeMap"]    = this.ToPairMapS(nods,[]string{"Id","Name"})
-	this.Data["IsExpire"]  = libs.IsExpire
+	this.Data["IsExpire"]   = libs.IsExpire
+	this.Data["Paginator"]  = page.Render()
 	
 	this.ResetLayout()
 	this.TplName ="bus_member_list.html"

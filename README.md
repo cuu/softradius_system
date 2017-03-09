@@ -1,5 +1,5 @@
 # SoftRadius  a golang based radius accounting system
-# 大宝剑计费系统 ,基于go语言,beego框架,AdminLTE UI
+# 大宝剑计费系统 ,基于go语言,beego框架,专注流量与时间
 
 ## Requirements
 * beego 1.7+
@@ -42,7 +42,7 @@ MPL 2.0
 - [x] Online user ,accouting works,
 - [x] Radius auth ,auth user from database, have not  implemented kickoff 
 - [x] Radius acct ,accouting flow and time to User self,will add acct tickets for logging
-- [ ] Agency
+- [x] Agency
 - [x] Members , only quick open
 - [x] Sidbar search
 - [ ] Multi Vendor radius support
