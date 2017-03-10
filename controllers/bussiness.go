@@ -106,6 +106,14 @@ r.Route{Path:"/members",Name:"用户信息管理",Category:_cate,Is_menu :true, 
 
 
 	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/batch", Name:"用户批量开户",Category:_cate,Is_menu:true, Order:1.21,Is_open:true, Methods:"*:MemberBatch"})
+
+
+	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/batrule", Name:"批量开户规则",Category:_cate,Is_menu:true, Order:1.22,Is_open:true, Methods:"*:MemberBatchRules"})
+
+	
+	_ctl.routes = append( _ctl.routes,
 		r.Route{Path:"/member/detail", Name:"用户详细页面",Category:_cate,Is_menu:false, Order:1.3,Is_open:true, Methods:"*:MemberDetail"})
 	
 	_ctl.routes = append( _ctl.routes,
@@ -630,4 +638,12 @@ func (this *BusController) MemberDetail() {
 	this.TplName = "bus_member_detail.html"
 	
 	this.Render()
+}
+
+func (this *BusController) MemberBatch() {
+	
+}
+
+func (this *BusController) MemberBatchRules() {
+	
 }

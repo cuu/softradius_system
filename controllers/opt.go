@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego"
 
 	//	sort "github.com/cuu/softradius/libs/sortutil"
+	re "gopkg.in/gorethink/gorethink.v3"
 	rdb "github.com/cuu/softradius/database/shelf"
 	
 )
@@ -178,15 +179,76 @@ func (this *OptController) OptOnline() {
 }
 
 
-func (this *OptController) OperLog() {
+func (this *OptController) OperLogPageData(skip int) (int,[]OperLog) {
 	var logs []OperLog
-	rdb.DataBase().SkipGet2(&logs,0,1000)
+	total := 0
 	
-	this.TplName = "opr_log_list.html"
+	//operator_name
+	//keyword
+	//query_begin_time
+	//query_end_time
+	var filter rdb.FilterFunc
 	
-	
-	//this.Data[""] = logs
+	operator_name    := this.POST("operator_name")
+	keyword          := this.POST("keyword")
+	query_begin_time := this.POST("query_begin_time")
+	query_end_time   := this.POST("query_end_time")
 
+	if operator_name != "" {
+		filter = func(me re.Term) re.Term {
+			return me.Field("Name").Eq(operator_name)
+		}
+	}
+	
+	if keyword != "" {
+		filter = func(me re.Term) re.Term {
+			return me.Field("Desc").Match(keyword)
+		}
+	}
+	
+	if query_begin_time != "" && query_end_time != "" {
+		filter = func(me re.Term) re.Term {
+			return me.Field("Time").During(query_begin_time,query_end_time)
+		}
+	}
+	
+	if operator_name != "" && keyword != "" {
+			filter = func(me re.Term) re.Term {
+			return me.Field("Desc").Match(keyword).And(me.Field("Name").Eq(operator_name))
+		}
+	}
+
+	if operator_name != "" && keyword != "" && query_begin_time != "" && query_end_time != "" {
+
+		filter = func(me re.Term) re.Term {
+			return me.Field("Name").Eq(operator_name).And(me.Field("Desc").Match(keyword).And(me.Field("Time").During(query_begin_time,query_end_time)))			
+//			return me.Field("Desc").Match(keyword).And(me.Field("Name").Eq(operator_name).And(me.Field("Time").During(query_begin_time,query_end_time)))
+		}
+	}
+
+	if operator_name == "" && keyword == "" && query_begin_time == "" && query_end_time =="" {
+		rdb.DataBase().SkipGet2(&logs,skip,this.PerPage)
+		total = rdb.DataBase().TableCount(&logs)
+		
+	}else {
+		rdb.DataBase().SearchSkipGetFunc(&logs,filter, skip,this.PerPage)
+		total = len(logs)
+	}
+	
+	return total,logs
+		
+}
+
+func (this *OptController) OperLog() {
+		
+	this.TplName = "opr_log_list.html"
+	page := this.InitPage()	
+	total,results := this.OperLogPageData( libs.Or(page.Page,0).(int)*this.PerPage )
+	page.MakePager(total)
+	
+	this.Data["Results"] = results
+	this.Data["Paginator"] = page.Render()
+	
 	this.Render()
 	
 }

@@ -2,7 +2,7 @@ package controllers
 
 import (
 	r "github.com/cuu/softradius/routers"
-	"github.com/cuu/softradius/models"
+//	"github.com/cuu/softradius/models"
 	"github.com/cuu/softradius/libs"
 	"fmt"
 	"strconv"
@@ -160,7 +160,7 @@ func (this *DefController) Login_post() {
 	
 }
 
-func (this *DefController) QuickSearchMembers(qu string ,skip int )(int, []Members){
+func (this *DefController) MembersPageData(qu string ,skip int )(int, []Members){
 	var nods []Members
 
 	/*
@@ -193,7 +193,7 @@ func (this *DefController) QuickSearch() {
 	pdus := this.ProductList()
 
 	page := this.InitPage()	
-	total,mbms := this.QuickSearchMembers(query, libs.Or(page.Page,0).(int)*this.PerPage )
+	total,mbms := this.MembersPageData(query, libs.Or(page.Page,0).(int)*this.PerPage )
 	page.MakePager(total)
 	
 	this.Data["MemberList"] = mbms

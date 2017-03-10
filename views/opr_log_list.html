@@ -1,34 +1,27 @@
-<link rel="stylesheet" href="/static/js/datepicker.css"> 
-   <script>
-    $(document).ready(function(){
-        $("#query_begin_time").datepicker();
-        $("#query_end_time").datepicker();
-    });
-   </script>
-    
+
 <div class="box">
     <div class="panel-heading"><i class="fa fa-hdd-o"></i> 上网记录查询</div>
     <div class="panel-body">
-        <form id="query_form" class="form-horizontal form-well" role="form" action="/ops/opslog" method="post">
+        <form id="query_form" class="form-horizontal form-well" role="form" action="/operlog" method="post">
             <div class="form-group">
                 <label for="operator_name" class="col-md-2 control-label">操作员名</label>
                 <div class="col-md-3">
-                    <input type="text" id="operator_name" name="operator_name" class="form-control" value="${operator_name or ''}">
+                    <input type="text" id="operator_name" name="operator_name" class="form-control" value="{{call $.Post "operator_name"}}">
                 </div>           
                 <label for="keyword" class="col-md-2 control-label">关键字</label>
                 <div class="col-md-3">
-                    <input type="text" id="keyword" name="keyword" class="form-control" value="${(keyword or '').decode("utf-8")}">
+                    <input type="text" id="keyword" name="keyword" class="form-control" value="{{call $.Post "keyword"}}">
                 </div>
             </div>   
             <div class="form-group">
                 <label for="query_begin_time" class="col-md-2 control-label">开始时间</label>
 
                 <div class="col-md-3">
-                    <input type="text" id="query_begin_time" name="query_begin_time" value="${query_begin_time or ''}" class="form-control form_datetime"  >
+                    <input type="text" id="query_begin_time" name="query_begin_time" value="{{call $.Post "query_begin_time"}}" class="form-control form_datetime"  >
                 </div>
                  <label for="query_end_time" class="col-md-2 control-label">结束时间</label>
                 <div class="col-md-3">
-                    <input type="text" id="query_end_time" name="query_end_time" value="${query_end_time or ''}"  class="form-control form_datetime">
+                    <input type="text" id="query_end_time" name="query_end_time" value="{{call $.Post "query_end_time"}}"  class="form-control form_datetime">
                 </div>
             </div>
             <div class="form-group">
@@ -42,23 +35,30 @@
             <thead>
             <tr>
                 <th width="10%">操作员</th>
-                <th width="10%">操作员ip</th>
+                <th width="10%">IP地址</th>
                 <th width="20%">操作时间</th>
                 <th width="60%">操作描述</th>
             </tr>
             </thead>
             <tbody>
-            % for opslog in page_data.result:
+            {{ range .Results }}
             <tr>
-                <td>${opslog.operator_name}</td>
-                <td>${opslog.operate_ip}</td>
-                <td>${opslog.operate_time}</td>
-                <td>${opslog.operate_desc[:512]}...</td>
+                <td>{{.Name}}</td>
+                <td>{{.Ip  }}</td>
+                <td>{{.Time}}</td>
+                <td>{{substr .Desc 0 512 }}...</td>
             </tr>
-            % endfor
+            {{end}}
             </tbody>
         </table>
 
-        ${page_data.render(form_id="query_form")}
+       {{str2html .Paginator}}
     </div>
 </div>
+
+   <script>
+    $(document).ready(function(){
+        $("#query_begin_time").datepicker({format: 'yyyy-mm-dd',endDate:"+1d"});
+        $("#query_end_time").datepicker({format: 'yyyy-mm-dd',endDate:"+1d"});
+    });
+   </script>

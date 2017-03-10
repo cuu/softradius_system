@@ -89,7 +89,7 @@
 
    <script>
     $(document).ready(function(){
-        $("#query_begin_time").datepicker({format: 'yyyy-mm-dd',});
+        $("#query_begin_time").datepicker({format: 'yyyy-mm-dd',endDate:"+1d"});
         $("#query_end_time").datepicker({format: 'yyyy-mm-dd',endDate:"+1d"});
         $('#maintable').dataTable({
           "bPaginate": true,
