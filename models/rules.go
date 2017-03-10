@@ -33,7 +33,7 @@ func Len_of( x int ,y int) *Regex{
 	return &Regex{rexp:valid, Msg: fmt.Sprintf(err_str,x,y)}	
 }
 
-var Notnull = NewRegex(".*\\S+.*","Not null")
+var Notnull = NewRegex(".*\\S+.*","不许为空")
 
 var Is_not_empty = NewRegex(`.+`, "不允许为空")
 

@@ -23,6 +23,24 @@ type BusController struct {
 	BaseController
 }
 
+//只允许连续生成,无随机生成的批量
+type Batch struct {
+	Id        string `gorethink:"id,omitempty"`
+	Name      string
+	Desc      string
+	Quantity  int
+	RuleId    string // id of the rules
+}
+
+//Batch rules 
+type BatRule struct {
+	Id string `gorethink:"id,omitempty"`
+	Name string   //Rule name
+	UserPrefix string   //Batch account Prefix
+	UserSuffixLen int // Length of account Suffix part
+	UserSn   int     // SerialNumber of this Batch in this rule
+}
+
 type AcceptLog struct {
 	Id           string `gorethink:"id,omitempty"`
 	AcceptType   string  //open
@@ -112,7 +130,15 @@ r.Route{Path:"/members",Name:"用户信息管理",Category:_cate,Is_menu :true, 
 	_ctl.routes = append( _ctl.routes,
 		r.Route{Path:"/member/batrule", Name:"批量开户规则",Category:_cate,Is_menu:true, Order:1.22,Is_open:true, Methods:"*:MemberBatchRules"})
 
+	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/batrule/add", Name:"增加批量规则",Category:_cate,Is_menu:false, Order:1.23,Is_open:true, Methods:"*:MemberBatchRuleAdd"})
 	
+	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/batrule/update", Name:"更新批量规则",Category:_cate,Is_menu:false, Order:1.24,Is_open:true, Methods:"*:MemberBatchRuleUpdate"})
+
+	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/batrule/delete", Name:"删除批量规则",Category:_cate,Is_menu:false, Order:1.25,Is_open:true, Methods:"*:MemberBatchRuleDelete"})
+
 	_ctl.routes = append( _ctl.routes,
 		r.Route{Path:"/member/detail", Name:"用户详细页面",Category:_cate,Is_menu:false, Order:1.3,Is_open:true, Methods:"*:MemberDetail"})
 	
@@ -645,5 +671,136 @@ func (this *BusController) MemberBatch() {
 }
 
 func (this *BusController) MemberBatchRules() {
+	var items []BatRule
+	
+	this.TplName = "bus_rule_list.html"
+
+	rdb.DataBase().SkipGet2(&items,0,1000)
+
+	this.Data["Rules"] = items
+
+	this.Render()
 	
 }
+
+
+func (this *BusController) MemberBatchRuleAddForm() *models.Form {
+	f := models.InfoForm("Add Rule","/member/batrule/add",
+		models.TextBox(&models.Input{Name:"Name",Required:true,Valid:models.Notnull,Description:"规则名称"}),
+		models.TextBox(&models.Input{Name:"UserPrefix",Required:true,Valid:models.Notnull,Description:"帐号前辍"}),
+		models.TextBox(&models.Input{Name:"UserSuffixLen",Valid:models.Is_number,Description:"帐号后辍长度",Value:"6",Required:true}),
+		models.Submit(&models.Input{Name:"submit",Value:"<b>提交</b>",Class:"btn btn-info"}),
+	)
+
+	return f
+		
+}
+
+func (this *BusController) MemberBatchRuleAdd() {
+
+	f:= this.MemberBatchRuleAddForm()
+
+	if this.InPost() {
+		if this.Validator2(f) == false {
+			this.Data["Form"] = f.Render()
+			this.Render()
+			return
+		}
+
+		one := &BatRule{}
+		this.ParsePostToStruct(one)
+		_,cnt := rdb.DataBase().FilterInsert(one,"Name")
+		if cnt  == 0 {
+			this.AddOperLog(fmt.Sprintf("新增规则%s",one.Name))
+			this.Redirect("/member/batrule", 302)
+		}else {
+			
+			this.ShowTips("规则有重复 "+strconv.Itoa(cnt) +"个" )
+		}
+		
+		this.Render()
+		return
+	}
+	
+	this.Data["Form"] = f.Render()
+
+	this.Render()
+	return
+}
+
+func (this *BusController) MemberBatchRuleUpdateForm() *models.Form {
+	f := models.InfoForm("Update","/member/batrule/update",
+		models.TextBox(&models.Input{Name:"Name",Required:true,Valid:models.Notnull,Description:"规则名称",ReadOnly:true}),
+		models.TextBox(&models.Input{Name:"UserPrefix",Required:true,Valid:models.Notnull,Description:"帐号前辍"}),
+		models.TextBox(&models.Input{Name:"UserSuffixLen",Valid:models.Is_number,Description:"帐号后辍长度",Value:"6",Required:true}),
+		models.Hidden(&models.Input{Name:"Id",Description:"编号"}),
+		models.Submit(&models.Input{Name:"submit",Value:"<b>提交</b>",Class:"btn btn-info"}),
+	)
+	return f
+	
+}
+
+func (this *BusController) MemberBatchRuleUpdate() {
+	f := this.MemberBatchRuleUpdateForm()
+	if this.InPost() {
+		if this.Validator2(f) == false {
+			this.Data["Form"] = f.Render()
+			this.Render()
+			return
+			
+		}else {
+			id := this.POST("Id")
+			if len(id) < 32 {
+				this.ShowTips("Form error")
+				this.Render()
+				return
+			}
+			
+			one := &BatRule{}
+			this.ParsePostToStruct(one)
+			resp,err := rdb.DataBase().Update(id,one)
+			if err == nil {
+				fmt.Println("Replaced ",resp.Replaced )
+			}else {
+				fmt.Println(err)
+			}
+			
+			this.Redirect("/member/batrule",302)
+			return	
+		}
+		return
+	}
+	
+	id := this.GET("rule_id")	
+	if id == "" {
+		this.Abort("403")
+		return
+	}
+	
+	one := &BatRule{}
+	err := rdb.DataBase().QuOne(one,id)
+	if err == nil {
+		f.FillFormFromStruct(one)
+		this.Data["Form"] = f.Render()
+	}
+	
+	this.Render()
+	
+}
+
+func (this *BusController) MemberBatchRuleDelete() {
+	
+	id := this.GET("rule_id")
+	if id == "" {
+		this.Abort("403")
+		return
+	}
+
+	
+	this.IdRowDelete(BatRule{},id,"/member/batrule")
+
+	
+	this.Render()
+	return
+}
+

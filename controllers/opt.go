@@ -252,3 +252,13 @@ func (this *OptController) OperLog() {
 	this.Render()
 	
 }
+
+func (this *BaseController) AddOperLog(desc string) {
+	ip:= this.Get_clientip()
+	name := this.GetCookie("username")
+	time := libs.Get_currtime()
+	_desc := fmt.Sprintf("操作员(%s) %s",name,desc)
+	one := &OperLog{Name:name,Ip:ip,Time:time,Desc:_desc}
+	rdb.DataBase().InsertQ(one)
+	
+}

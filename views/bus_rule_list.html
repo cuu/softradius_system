@@ -1,0 +1,58 @@
+<script>
+    function deleteRule(rule_id) {
+        if (confirm("确认删除吗？")) {
+            window.location.href = "/member/batrule/delete?rule_id=" + rule_id;
+        }
+    }
+</script>
+
+    <div class="box box-default">
+        <div class="box-header">
+            <i class="fa fa-user"></i>
+            <h3 class="box-title">账号生成规则管理</h3>
+            <div class="bar pull-right">
+             <a href="javascript:window.location.reload();"><i class="fa fa-refresh"></i> 刷新</a>
+             <a href="javascript:showhelp('node');"><i class="fa fa-question-circle"></i> 帮助</a>
+            </div>            
+        </div>
+    <div class="box-body">
+     <div class="container">
+        <div class="pull-left bottom10">
+            {{ if (call $.Match "/member/batrule/add") }}
+            <a href="/member/batrule/add" class="btn btn-sm bg-navy"><i class="fa fa-plus-circle"></i> 创建规则</a>
+            {{end}}
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>规则名称</th>
+                <th>账号前缀</th>
+                <th>账号后缀长度</th>
+                <th>当前序号</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .Rules }}
+            <tr>
+                <td>{{.Name}}</td>
+                <td>{{.UserPrefix}}</td>
+                <td>{{.UserSuffixLen}}</td>
+                <td>{{.UserSn}}</td>
+                <td>
+                    {{ if (call $.Match "/member/batrule/update") }}
+                    <a class="btn btn-default btn-xs" href="/member/batrule/update?rule_id={{.Id}}">
+                    <i class="fa fa-edit"></i> 修改</a>
+                    {{end}}
+                    {{ if (call $.Match "/member/batrule/delete") }}
+                    <a class="btn  btn-xs btn-danger" href="javascript:deleteRule('{{.Id}}')">
+                    <i class="fa fa-times"></i> 删除</a>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
