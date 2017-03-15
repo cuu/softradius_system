@@ -586,6 +586,7 @@ func (this *BusController) MemberQuickForm(nodes [][]string, pdus [][]string ) *
 		models.TextBox(&models.Input{Name:"Months",Description:"月数(包月有效)",Required:true}),
 		models.TextBox(&models.Input{Name:"ExpireDate",Description:"过期日期",Required:true,ReadOnly:true,Valid:models.Is_date}),
 		models.Hidden(&models.Input{Name:"Status",Value:"1",Description:"用户状态"}),
+		models.Hidden(&models.Input{Name:"FeeValue",Value:"0",Description:"费用"}),
 		models.TextArea(&models.Input{Name:"Desc",Description:"用户描述"}),
 		models.Submit(&models.Input{Name:"Submit",Value:"<b>提交</b>"}) )
 		
@@ -609,19 +610,73 @@ func (this *BusController) MemberQuick() {
 			return
 		}
 		one := &Members{}
+		balance := 0
+		order_fee := 0
+		expire_date := r.MAX_EXPIRE_DATE
+		
 		this.ParsePostToStruct(one)
-
+		
+		var _pdu = &Products{}
 		for _,p := range pdus {
 			if one.ProductId == p.Id {
 				one.ConcurNumber = p.ConcurNumber
+				_pdu = &p
+				if p.Policy == r.PPMonth {
+					months := this.GetStringI("Months")
+					order_fee = p.FeePrice *  months
+				}else if libs.In(p.Policy, r.BOMonth,r.BOTimes){
+					order_fee = p.FeePrice
+				}else if libs.In(p.Policy,r.PPTimes,r.PPFlow) {
+					balance = libs.Yuan2fen(this.GetStringI("FeeValue"))
+					expire_date = r.MAX_EXPIRE_DATE
+				}else if p.Policy == r.AwesomeFee {
+					expire_date = r.MAX_EXPIRE_DATE
+				}else if p.Policy ==r.AwesomeFeeBoTime {
+					expire_date = r.MAX_EXPIRE_DATE
+					order_fee = p.FeePrice
+				}				
 				break
 			}
 		}
-		one.CreateTime = libs.Get_currtime()
-		one.UpdateTime = libs.Get_currtime()
 		
-		_,cnt := rdb.DataBase().FilterInsert(one,"Name")
+		one.CreateTime = libs.Get_currtime()
+		one.UpdateTime = one.CreateTime
+		one.Balance = balance
+		one.TimeLength = _pdu.FeeTimes
+		one.FlowLength = _pdu.FeeFlows
+		one.ExpireDate = expire_date
+		rsp,cnt := rdb.DataBase().FilterInsert(one,"Name")
 		if cnt  == 0 {
+			//accept log
+			//order log
+
+			order_log := &OrderLog{}
+			accept_log := &AcceptLog{}
+			// accept log
+			// order log
+			member_id := rsp[0]
+			
+			accept_log.AcceptType   = "open"
+			accept_log.AcceptSource = "console"
+			accept_log.Account      = one.Name
+			accept_log.AcceptTime   = one.CreateTime
+			accept_log.Operator     = this.GetCookie("username")
+			accept_log.AcceptDesc   = "用户新开帐号"
+			
+			rsp,err := rdb.DataBase().InsertQ(accept_log)
+			if err != nil { fmt.Println(err) }
+			
+			order_log.MemberId  = member_id
+			order_log.ProductId = one.ProductId
+			order_log.OrderFee  = order_fee
+			order_log.ActualFee = libs.Yuan2fen(this.GetStringI("FeeValue"))
+			order_log.PayStatus = 1
+			order_log.AcceptId  = rsp[0]
+			order_log.OrderSource = "console"
+			order_log.OrderDesc  = "用户新开帐号"
+			order_log.CreateTime = one.CreateTime
+			
+			rsp,err = rdb.DataBase().InsertQ(order_log)
 			
 			this.Redirect("/members", 302)
 		}else {
@@ -831,11 +886,28 @@ func (this *BusController) MemberBatchAdd() {
 					max_count = s
 				}
 			}
+
+			order_fee := 0
+			balance := 0 // 批量的用户所有的初始余额是0
+			expire_date := r.MAX_EXPIRE_DATE
 			
+			if _pdu.Policy == r.PPMonth {
+				order_fee = _pdu.FeePrice * 1 //默认1个月批量
+			}else if libs.In(_pdu.Policy, r.BOMonth,r.BOTimes){
+				order_fee = _pdu.FeePrice
+			}else if libs.In(_pdu.Policy,r.PPTimes,r.PPFlow) {
+				expire_date = r.MAX_EXPIRE_DATE
+			}else if _pdu.Policy == r.AwesomeFee {
+				expire_date = r.MAX_EXPIRE_DATE
+			}else if _pdu.Policy ==r.AwesomeFeeBoTime {
+				expire_date = r.MAX_EXPIRE_DATE
+				order_fee = _pdu.FeePrice
+			}
+
 			for i:=0 ;i<max_count;i++ {
 				member := &Members{}
 				
-				member.Name = rule.UserPrefix + fmt.Sprintf(rule_format,i)
+				member.Name = rule.UserPrefix + fmt.Sprintf(rule_format,i+rule.UserSn)
 				member.RealName = fmt.Sprintf("批量%s用户",bat.Name)
 				member.BatchId = resp[0]
 				member.NodeId  = this.POST("NodeId")
@@ -843,27 +915,13 @@ func (this *BusController) MemberBatchAdd() {
 				member.ConcurNumber = _pdu.ConcurNumber
 				member.CreateTime  = libs.Get_currtime()
 				member.UpdateTime  = member.CreateTime
-
-				order_fee := 0
-				balance := 0 // 批量的用户所有的初始余额是0
-				expire_date := r.MAX_EXPIRE_DATE
-				
-				if _pdu.Policy == r.PPMonth {
-					order_fee = _pdu.FeePrice * 1 //默认1个月批量
-				}else if libs.In(_pdu.Policy, r.BOMonth,r.BOTimes){
-					order_fee = _pdu.FeePrice
-				}else if libs.In(_pdu.Policy,r.PPTimes,r.PPFlow) {
-					expire_date = r.MAX_EXPIRE_DATE
-				}else if _pdu.Policy == r.AwesomeFee {
-					expire_date = r.MAX_EXPIRE_DATE
-				}else if _pdu.Policy ==r.AwesomeFeeBoTime {
-					expire_date = r.MAX_EXPIRE_DATE
-					order_fee = _pdu.FeePrice
-				}
-				
+				member.Desc      = fmt.Sprintf("%s 批量用户,%s 操作员",bat.Name,opera.Name)
 				member.ExpireDate = expire_date
 				member.Balance    = balance
 				member.Status     = USEROK
+				member.TimeLength = _pdu.FeeTimes
+				member.FlowLength = _pdu.FeeFlows
+				
 				rsp,err := rdb.DataBase().Insert(member)
 				if err != nil {
 					//也许有重复之类的错误,不管它
