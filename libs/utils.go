@@ -12,6 +12,7 @@ import (
 	_ "github.com/mitchellh/mapstructure"
 	"github.com/cuu/softradius/libs/times"
 	"math"
+	mrand "math/rand"
 	"crypto/rand"
 	"io"
 )
@@ -415,3 +416,6 @@ func GenOrderId() string {
 	return fmt.Sprintf("%s%02d",strTime,_base_id)
 }
 
+func Random(min,max int) int {
+	return mrand.Intn(max-min)+min
+}

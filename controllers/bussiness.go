@@ -10,11 +10,20 @@ import (
 	"fmt"
 	"reflect"
 	"math"
+	//	"math/rand"
+	"strings"
 	"github.com/astaxie/beego"
 
 //	sort "github.com/cuu/softradius/libs/sortutil"
 	rdb  "github.com/cuu/softradius/database/shelf"
 	
+)
+
+const (
+	USEROK =1
+	USERPAUSE = 2
+	USERSOLD= 3
+	USEREXPIRE = 4
 )
 
 var UserState = map[int]string{1: "正常", 2: "停机", 3: "销户", 4: "到期"}
@@ -25,11 +34,15 @@ type BusController struct {
 
 //只允许连续生成,无随机生成的批量
 type Batch struct {
-	Id        string `gorethink:"id,omitempty"`
-	Name      string
-	Desc      string
-	Quantity  int
-	RuleId    string // id of the rules
+	Id            string `gorethink:"id,omitempty"`
+	Name          string
+	NodeId        string
+	ProductId     string
+	Quantity      int
+	UserPrefix    string
+	Desc          string
+	Count         int
+	CreateTime    string
 }
 
 //Batch rules 
@@ -126,18 +139,24 @@ r.Route{Path:"/members",Name:"用户信息管理",Category:_cate,Is_menu :true, 
 	_ctl.routes = append( _ctl.routes,
 		r.Route{Path:"/member/batch", Name:"用户批量开户",Category:_cate,Is_menu:true, Order:1.21,Is_open:true, Methods:"*:MemberBatch"})
 
+	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/batch/add", Name:"创建批量开户",Category:_cate,Is_menu:false, Order:1.211,Is_open:true, Methods:"*:MemberBatchAdd"})
 
 	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/member/batrule", Name:"批量开户规则",Category:_cate,Is_menu:true, Order:1.22,Is_open:true, Methods:"*:MemberBatchRules"})
+		r.Route{Path:"/member/batch/delete", Name:"删除批量",Category:_cate,Is_menu:false, Order:1.212,Is_open:true, Methods:"*:MemberBatchDel"})
+	
 
 	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/member/batrule/add", Name:"增加批量规则",Category:_cate,Is_menu:false, Order:1.23,Is_open:true, Methods:"*:MemberBatchRuleAdd"})
+		r.Route{Path:"/member/batrule", Name:"批量开户规则",Category:_cate,Is_menu:true, Order:1.221,Is_open:true, Methods:"*:MemberBatchRules"})
+
+	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/batrule/add", Name:"增加批量规则",Category:_cate,Is_menu:false, Order:1.222,Is_open:true, Methods:"*:MemberBatchRuleAdd"})
 	
 	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/member/batrule/update", Name:"更新批量规则",Category:_cate,Is_menu:false, Order:1.24,Is_open:true, Methods:"*:MemberBatchRuleUpdate"})
+		r.Route{Path:"/member/batrule/update", Name:"更新批量规则",Category:_cate,Is_menu:false, Order:1.223,Is_open:true, Methods:"*:MemberBatchRuleUpdate"})
 
 	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/member/batrule/delete", Name:"删除批量规则",Category:_cate,Is_menu:false, Order:1.25,Is_open:true, Methods:"*:MemberBatchRuleDelete"})
+		r.Route{Path:"/member/batrule/delete", Name:"删除批量规则",Category:_cate,Is_menu:false, Order:1.224,Is_open:true, Methods:"*:MemberBatchRuleDelete"})
 
 	_ctl.routes = append( _ctl.routes,
 		r.Route{Path:"/member/detail", Name:"用户详细页面",Category:_cate,Is_menu:false, Order:1.3,Is_open:true, Methods:"*:MemberDetail"})
@@ -461,9 +480,10 @@ func (this *BusController) MemberCreate() {
 		one.ActiveCode,_ = libs.NewUUID()
 		one.ExpireDate   = expire_date
 		
-		_,cnt := rdb.DataBase().FilterInsert(one,"Name")
+		rsp,cnt := rdb.DataBase().FilterInsert(one,"Name")
 		if cnt  == 0 {  // successfully fucked into
 			// insert accept log and order log
+			member_id := rsp[0] 
 			accept_log.AcceptType   = "open"
 			accept_log.AcceptSource = "console"
 			accept_log.Account      = one.Name
@@ -474,7 +494,7 @@ func (this *BusController) MemberCreate() {
 			rsp,err := rdb.DataBase().InsertQ(accept_log)
 			if err != nil { fmt.Println(err) }
 			
-			order_log.MemberId  = rsp[0]
+			order_log.MemberId  = member_id
 			order_log.ProductId = one.ProductId
 			order_log.OrderFee  = order_fee
 			order_log.ActualFee = libs.Yuan2fen( int(feevalue))
@@ -506,7 +526,7 @@ func (this *BusController) MemberCreate() {
 				rsp,err = rdb.DataBase().InsertQ(agc_order1)
 				
 				agc_order2.AgencyId      = agc_id
-				agc_order2.MemberOrderId = rsp[0]
+				agc_order2.MemberOrderId = agc_order1.MemberOrderId
 				agc_order2.FeeType       = "share"
 
 				
@@ -541,6 +561,7 @@ func (this *BusController) MemberCreate() {
 		}else {
 			
 			this.ShowTips("用户名有重复 "+strconv.Itoa(cnt) +"个" )
+
 			this.Render()
 			return
 		}
@@ -666,9 +687,298 @@ func (this *BusController) MemberDetail() {
 	this.Render()
 }
 
+func (this *BusController) MemberBatchPageData(skip int)(int,[]Batch) {
+	var items []Batch
+	rdb.DataBase().SkipGet2(&items,skip,this.PerPage)
+	total := rdb.DataBase().TableCount(&items)
+
+	
+	return total,items
+}
+
 func (this *BusController) MemberBatch() {
 	
+	this.TplName = "bus_batch_list.html"
+	
+	nods := this.NodeList()
+	pdus := this.ProductList()
+
+	page := this.InitPage()	
+	total,results := this.MemberBatchPageData( libs.Or(page.Page,0).(int)*this.PerPage )
+	page.MakePager(total)
+	
+	this.Data["Results"]     = results
+	this.Data["Paginator"]   = page.Render()	
+	this.Data["NodeMap"]     = this.ToPairMapS(nods,[]string{"Id","Name"})
+	this.Data["ProductsMap"] = this.ToPairMapS(pdus,[]string{"Id","Name"})
+	
+	this.Render()
+	
+	
 }
+
+func (this *BusController) MemberBatchAddForm(nodes [][]string, pdus [][]string, rules [][]string) *models.Form {
+	f := models.InfoForm("AddBatch","/member/batch/add",
+		models.Dropdown(&models.Select{Name:"NodeId",Description:"用户区域",Args:nodes}),
+		models.Dropdown(&models.Select{Name:"ProductId",Description:"用户资费",Args:pdus}),
+		models.Dropdown(&models.Select{Name:"RuleId",Description:"创建规则",Args:rules}),
+		models.TextBox(&models.Input{Name:"Name",Description:"批量名称",Valid:models.Notnull}),
+		models.TextArea(&models.Input{Name:"Desc",Description:"批量描述",Valid:models.Len_of(0,100)}),
+		models.TextBox(&models.Input{Name:"Count",Description:"创建用户数量,最大1000",Valid:models.Is_number}),
+		models.TextBox(&models.Input{Name:"PassLen",Description:"密码长度,2-10位",Valid:models.Is_number}),
+		models.Submit(&models.Input{Name:"Submit",Value:"<b>提交</b>",Class:"btn btn-info"}))
+	return f
+}
+
+
+func (this *BusController) MemberBatchAddUserPassword(pass_len int ) string {
+	
+	if pass_len - 1 <= 0 {  // pass_len must bigger than 1 
+		return "NoPass"
+	}
+	start ,_:= strconv.Atoi("1"+ strings.Repeat("0",pass_len-1))
+	end ,_  := strconv.Atoi( strings.Repeat("9",pass_len))
+
+	n := libs.Random(start,end)
+	ns := strconv.Itoa(n)
+	return ns
+}
+
+func (this *BusController) MemberBatchAdd() {
+	var rules []BatRule
+	
+	nods := this.NodeList()
+	pdus := this.ProductList()
+	rdb.DataBase().SkipGet2(&rules,0,1000)
+	
+	allnodes    := this.Items(nods,[]string{"Id","Name"})
+	allproducts := this.Items(pdus,[]string{"Id","Name"})
+	allrules    := this.Items(rules,[]string{"Id","Name"})
+
+	f := this.MemberBatchAddForm(allnodes,allproducts,allrules)
+
+	if this.InPost() {
+		pdu_id  := this.POST("ProductId")
+		_pdu := &Products{}
+		for _,v := range pdus {
+			if v.Id == pdu_id {
+				_pdu = &v
+				break
+			}
+		}
+		
+		rule_id := this.POST("RuleId")
+		if len(rule_id)< 32 {
+			this.ShowTips("必须要有合法的批量规则")
+			this.Render()
+			return
+		}
+
+		count := this.GetStringI("Count")
+		if count <= 0 || count > 1000 {
+			this.ShowTips("创建数量不正确,0-1000范围内")
+			this.Render()
+			return
+		}
+		
+		passlen := this.GetStringI("PassLen")
+		if passlen < 2 || passlen > 10 {
+			this.ShowTips("密码长度2-10位")
+			this.Render()
+			return
+		}
+		
+		rule := &BatRule{}
+		rdb.DataBase().QuOne(rule,rule_id)		
+		
+		bat := &Batch{}
+		
+		this.ParsePostToStruct(bat)
+		bat.UserPrefix = rule.UserPrefix
+		bat.Count = 0 // bat count depends on the actual inserted
+		
+		agc := &Agency{}
+		opera := this.GetOperator()
+		if opera.Type == AGENCYOPERA {
+			err := rdb.DataBase().FilterOne(agc,map[string]string{"OperatorName":opera.Name})
+			if err != nil {
+				fmt.Println("BaseController GetOperator error")
+			}
+			
+			
+			allfee := _pdu.FeePrice *count
+			if agc.Amount < allfee {
+				this.ShowTips(fmt.Sprintf("代理商您的余额不足于生成此次批量,余额为%d,此次共需%d,%d个用户,单价为%d",libs.Fen2yuan(agc.Amount),libs.Fen2yuan(allfee),count,libs.Fen2yuan(_pdu.FeePrice)))
+				this.Render()
+				return
+		
+			}
+			
+		}
+				
+		resp,cnt := rdb.DataBase().FilterInsert(bat,"Name")
+		if cnt  == 0 {
+			this.AddOperLog(fmt.Sprintf("新增批量%s",bat.Name))
+			//Check oper type,if is agency,deal with the Amount
+			//insert members
+			
+			total_injection := 0
+			//检查位数与实际批量数字的大小,不可以超过UserSuffixeLen范围
+			rule_format := fmt.Sprintf("%%0%dd",rule.UserSuffixLen)
+			max_count := count
+			if s,err := strconv.Atoi(strings.Repeat("9",rule.UserSuffixLen)); err == nil {
+				if s < max_count {
+					max_count = s
+				}
+			}
+			
+			for i:=0 ;i<max_count;i++ {
+				member := &Members{}
+				
+				member.Name = rule.UserPrefix + fmt.Sprintf(rule_format,i)
+				member.RealName = fmt.Sprintf("批量%s用户",bat.Name)
+				member.BatchId = resp[0]
+				member.NodeId  = this.POST("NodeId")
+				member.AgencyId = agc.Id
+				member.ConcurNumber = _pdu.ConcurNumber
+				member.CreateTime  = libs.Get_currtime()
+				member.UpdateTime  = member.CreateTime
+
+				order_fee := 0
+				balance := 0 // 批量的用户所有的初始余额是0
+				expire_date := r.MAX_EXPIRE_DATE
+				
+				if _pdu.Policy == r.PPMonth {
+					order_fee = _pdu.FeePrice * 1 //默认1个月批量
+				}else if libs.In(_pdu.Policy, r.BOMonth,r.BOTimes){
+					order_fee = _pdu.FeePrice
+				}else if libs.In(_pdu.Policy,r.PPTimes,r.PPFlow) {
+					expire_date = r.MAX_EXPIRE_DATE
+				}else if _pdu.Policy == r.AwesomeFee {
+					expire_date = r.MAX_EXPIRE_DATE
+				}else if _pdu.Policy ==r.AwesomeFeeBoTime {
+					expire_date = r.MAX_EXPIRE_DATE
+					order_fee = _pdu.FeePrice
+				}
+				
+				member.ExpireDate = expire_date
+				member.Balance    = balance
+				member.Status     = USEROK
+				rsp,err := rdb.DataBase().Insert(member)
+				if err != nil {
+					//也许有重复之类的错误,不管它
+					fmt.Println("Batch Insert: ",err)
+				}else{
+					total_injection += rsp.Inserted
+					order_log := &OrderLog{}
+					accept_log := &AcceptLog{}
+					// accept log
+					// order log
+					member_id := rsp.GeneratedKeys[0]
+					
+					accept_log.AcceptType   = "open"
+					accept_log.AcceptSource = "console"
+					accept_log.Account      = member.Name
+					accept_log.AcceptTime   = member.CreateTime
+					accept_log.Operator     = opera.Name
+					accept_log.AcceptDesc   = "用户新开帐号"
+					
+					rsp,err := rdb.DataBase().InsertQ(accept_log)
+					if err != nil { fmt.Println(err) }
+					
+					order_log.MemberId  = member_id
+					order_log.ProductId = member.ProductId
+					order_log.OrderFee  = order_fee
+					order_log.ActualFee = order_fee
+					order_log.PayStatus = 1
+					order_log.AcceptId  = rsp[0]
+					order_log.OrderSource = "console"
+					order_log.OrderDesc  = "用户新开帐号"
+					order_log.CreateTime = member.CreateTime
+					
+					rsp,err = rdb.DataBase().InsertQ(order_log)
+					
+					if opera.Type == AGENCYOPERA {
+						/// add agency order and share
+						agc_order1 := &AgencyOrder{}
+						agc_order2 := &AgencyOrder{}
+						agc_share  := &AgencyShare{}
+						
+						agc_order1.AgencyId      = agc.Id
+						agc_order1.MemberOrderId = rsp[0]
+						agc_order1.FeeType       = "cost"
+						agc_order1.FeeValue      = order_fee
+						agc_order1.FeeTotal      = (agc.Amount - agc_order1.FeeValue)
+						agc_order1.FeeDesc       = ("代理商批量开户 "+member.Name)
+						agc_order1.CreateTime    = libs.Get_currtime()
+						agc.Amount = agc_order1.FeeTotal
+						
+						rsp,err = rdb.DataBase().InsertQ(agc_order1)
+						
+						agc_order2.AgencyId      = agc.Id
+						agc_order2.MemberOrderId = agc_order1.MemberOrderId
+						agc_order2.FeeType       = "share"
+						
+						
+						agc_order2.FeeValue      = agc_order1.FeeValue
+						rate := float64(float64(agc.ShareRate)/100.00)
+						//	fmt.Println(agc_order1.FeeValue, rate)
+						agc_order2.FeeValue = int(float64(agc_order1.FeeValue)*rate)
+						//	fmt.Println(agc_order2.FeeValue, rate)
+						
+						agc_order2.FeeTotal      = (agc.Amount + agc_order2.FeeValue)
+						agc_order2.FeeDesc       = fmt.Sprintf("代理商分成 %s %f ",member.Name,rate)
+						agc_order2.CreateTime    = libs.Get_currtime()
+						agc.Amount = agc_order2.FeeTotal
+						rsp,err = rdb.DataBase().InsertQ(agc_order2)
+						
+						agc_share.AgencyId   = agc.Id
+						agc_share.OrderId    = rsp[0]
+						agc_share.ShareRate  = agc.ShareRate
+						agc_share.ShareFee   = agc_order2.FeeValue
+						agc_share.FeeValue   = agc_order1.FeeValue
+						agc_share.NodeId     = member.NodeId
+						agc_share.ProductId  = member.ProductId
+						agc_share.CreateTime = libs.Get_currtime()
+						rsp,err = rdb.DataBase().InsertQ(agc_share)
+						
+						//refresh the amount
+						fmt.Println(agc.Amount)
+						rdb.DataBase().Update(agc.Id,agc)
+						
+					}
+				}
+			}
+				
+				rule.UserSn += total_injection
+				bat.Count    = total_injection
+				
+				rdb.DataBase().Update(resp[0],bat)
+				rdb.DataBase().Update(rule_id,rule)
+				
+				this.Redirect("/member/batch", 302)
+				return
+			
+		}else {
+			
+			this.ShowTips("规则有重复 "+strconv.Itoa(cnt) +"个" )
+			this.Render()
+			return
+		}
+		
+		return
+	}
+	
+	this.Data["Form"] = f.Render()
+
+	this.Render()
+	
+}
+
+func (this *BusController) MemberBatchDel() {
+	
+}
+
 
 func (this *BusController) MemberBatchRules() {
 	var items []BatRule
@@ -716,6 +1026,7 @@ func (this *BusController) MemberBatchRuleAdd() {
 		}else {
 			
 			this.ShowTips("规则有重复 "+strconv.Itoa(cnt) +"个" )
+			
 		}
 		
 		this.Render()

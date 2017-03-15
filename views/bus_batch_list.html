@@ -1,0 +1,69 @@
+<script>
+    function deleteBatchGroup(id) {
+        if (confirm("删除批量组将导致所有这个批次的用户被清空, 确定?")) {
+            window.location.href = "/member/batch/delete?batch_id=" + id;
+        }
+    }
+
+    function exportBatchGroup(id, type) {
+        window.location.href = "/member/batch/export?batch_id=" + id + '&type=' + type;
+    }
+</script>
+
+    <div class="box box-primary">
+        <div class="box-header">
+            <i class="fa fa-archive"></i>
+            <h3 class="box-title">批量创建用户批次列表</h3>
+        </div>
+        <div class="box-body">
+            <div class="container">
+                <div class="pull-right bottom10">
+                    {{ if (call $.Match "/member/batch/add") }}
+                    <a href="/member/batch/add" class="btn btn-sm btn-info">批量创建用户</a>
+                    {{end}}
+                </div>
+
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                      
+                        <th>资费策略</th>
+                        <th>区域</th>
+                        <th>名称</th>
+                        <th>描述</th>
+                        <th>用户账号前缀</th>
+                        <th>数量</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ range .Results }}
+                    <tr>
+                        
+                        <td>{{map_get $.ProductsMap .ProductId}}</td>
+                        <td>{{map_get $.NodeMap .NodeId}}</td>
+                        <td>{{.Name}}</td>
+                        <td>{{.Desc}}</td>
+                        <td>{{.UserPrefix}}</td>
+                        <td>{{.Count}}</td>
+                        <td>{{.CreateTime}}</td>
+                        <td>
+                            {{ if (call $.Match "/member/batch/delete") }}
+                            <a class="opt-btn btn-default" href="javascript:deleteBatchGroup('${batch.id}')">删除</a>
+                            {{end}}
+                            {{ if (call $.Match "/member/batch/export") }}
+                            <a class="opt-btn btn-default" href="javascript:exportBatchGroup('${batch.id}', 'csv')">导出CSV</a>
+                            {{end}}
+                            {{ if (call $.Match "/member/batch/export") }}
+                            <a class="opt-btn btn-default" href="javascript:exportBatchGroup('${batch.id}', 'xls')">导出Excel</a>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                    </tbody>
+                </table>
+                {{str2html .Paginator}}
+            </div>
+        </div>
+    </div>

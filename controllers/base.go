@@ -14,7 +14,13 @@ import (
 
 var YESNO = map[int]string{ 0:"否", 1:"是", }
 ///0级管理员只有一个,1级有很多,2级是给代理商的管理员,2级管理员没有系统管理权限
-var Opr_type = map[int]string{ 0: "系统管理员", 1: "普通操作员",2:"代理商操作员"}
+const (
+	SUPEROPERA  = 0
+	NORMALOPERA = 1
+	AGENCYOPERA = 2
+)
+
+var Opr_type = map[int]string{ SUPEROPERA: "系统管理员", NORMALOPERA: "普通操作员",AGENCYOPERA:"代理商操作员"}
 
 var Opr_status = map[int]string{0: "正常", 1: "停用"}
 
@@ -484,3 +490,16 @@ func (this *BaseController) GetStringF(key string) float64 {
 	return i
 }
 
+func (this *BaseController) GetOperator() *Operators {
+	name := this.GetString("username")
+
+	one := &Operators{}
+
+	err := rdb.DataBase().FilterOne(one,map[string]string{"Name":name})
+	if err != nil {
+		fmt.Println("BaseController GetOperator error")
+	}
+
+	return one
+	
+}

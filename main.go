@@ -11,6 +11,8 @@ import (
 	"flag"
 	"errors"
 	"runtime"
+	"time"
+	"math/rand"
 	//	"os"
  	re "gopkg.in/gorethink/gorethink.v3"
 	rdb "github.com/cuu/softradius/database/shelf"
@@ -117,6 +119,8 @@ func main() {
 	admin := flag.Bool("admin",false,"Run admin interface")
 	radius := flag.Bool("radius",false, "Run radius server")
 	radacct := flag.Bool("radacct",false,"Run radius acct server")
+
+	rand.Seed(time.Now().UTC().UnixNano())
 	
 	flag.Parse()
 		
