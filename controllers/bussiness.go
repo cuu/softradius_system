@@ -52,6 +52,7 @@ type BatRule struct {
 	UserPrefix string   //Batch account Prefix
 	UserSuffixLen int // Length of account Suffix part
 	UserSn   int     // SerialNumber of this Batch in this rule
+	Count    int     // total count
 }
 
 type AcceptLog struct {
@@ -160,9 +161,12 @@ r.Route{Path:"/members",Name:"用户信息管理",Category:_cate,Is_menu :true, 
 
 	_ctl.routes = append( _ctl.routes,
 		r.Route{Path:"/member/detail", Name:"用户详细页面",Category:_cate,Is_menu:false, Order:1.3,Is_open:true, Methods:"*:MemberDetail"})
+
+	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/member/delete", Name:"用户详细页面",Category:_cate,Is_menu:false, Order:1.31,Is_open:true, Methods:"*:MemberDelete"})
 	
 	_ctl.routes = append( _ctl.routes,
-		r.Route{Path:"/bus/opencalc", Name:"用户开户函数",Category:_cate,Is_menu:false, Order:4.3,Is_open:false, Methods:"*:OpenCalc"})
+		r.Route{Path:"/bus/opencalc", Name:"用户开户函数",Category:_cate,Is_menu:false, Order:8.3,Is_open:false, Methods:"*:OpenCalc"})
 	
 	_ctl.AddRoutes()
 	
@@ -742,6 +746,37 @@ func (this *BusController) MemberDetail() {
 	this.Render()
 }
 
+func (this *BusController) MemberDelete() {
+	id := this.GetString("member_id")
+
+	if id == "" {
+		this.Abort("403")
+		return
+	}
+	one := &Members{}
+	err:= rdb.DataBase().QuOne(one,id)
+	if err == nil {
+		bat := &Batch{}
+		rule := &BatRule{}
+		if one.BatchId != "" {	
+			err = rdb.DataBase().QuOne(bat,one.BatchId)
+			if err == nil {
+				err = rdb.DataBase().FilterOne(rule,map[string]string{"UserPrefix":bat.UserPrefix})
+				rule.Count--
+				//Count减少,UserSn只增不减,直到爆破
+				bat.Count--
+				rdb.DataBase().Update(rule.Id,rule)
+				rdb.DataBase().Update(bat.Id,bat)
+			}
+		}
+	
+		this.IdRowDelete(Members{},id,"/members")
+		this.Render()
+		return
+	}
+	return	
+}
+
 func (this *BusController) MemberBatchPageData(skip int)(int,[]Batch) {
 	var items []Batch
 	rdb.DataBase().SkipGet2(&items,skip,this.PerPage)
@@ -787,7 +822,7 @@ func (this *BusController) MemberBatchAddForm(nodes [][]string, pdus [][]string,
 
 
 func (this *BusController) MemberBatchAddUserPassword(pass_len int ) string {
-	
+	//2017 03 15: only random number password for batch users now
 	if pass_len - 1 <= 0 {  // pass_len must bigger than 1 
 		return "NoPass"
 	}
@@ -911,11 +946,13 @@ func (this *BusController) MemberBatchAdd() {
 				member.RealName = fmt.Sprintf("批量%s用户",bat.Name)
 				member.BatchId = resp[0]
 				member.NodeId  = this.POST("NodeId")
+				member.ProductId = _pdu.Id
 				member.AgencyId = agc.Id
 				member.ConcurNumber = _pdu.ConcurNumber
 				member.CreateTime  = libs.Get_currtime()
 				member.UpdateTime  = member.CreateTime
-				member.Desc      = fmt.Sprintf("%s 批量用户,%s 操作员",bat.Name,opera.Name)
+				member.Password    = this.MemberBatchAddUserPassword(passlen)
+				member.Desc      = fmt.Sprintf("批量 %s,操作员 %s",bat.Name,opera.Name)
 				member.ExpireDate = expire_date
 				member.Balance    = balance
 				member.Status     = USEROK
@@ -1008,18 +1045,19 @@ func (this *BusController) MemberBatchAdd() {
 				}
 			}
 				
-				rule.UserSn += total_injection
-				bat.Count    = total_injection
-				
-				rdb.DataBase().Update(resp[0],bat)
-				rdb.DataBase().Update(rule_id,rule)
-				
-				this.Redirect("/member/batch", 302)
-				return
+			rule.UserSn += total_injection
+			rule.Count  += total_injection 
+			bat.Count    = total_injection
+			
+			rdb.DataBase().Update(resp[0],bat)
+			rdb.DataBase().Update(rule_id,rule)
+			
+			this.Redirect("/member/batch", 302)
+			return
 			
 		}else {
 			
-			this.ShowTips("规则有重复 "+strconv.Itoa(cnt) +"个" )
+			this.ShowTips("批量名称有重复 "+strconv.Itoa(cnt) +"个" )
 			this.Render()
 			return
 		}
@@ -1034,7 +1072,29 @@ func (this *BusController) MemberBatchAdd() {
 }
 
 func (this *BusController) MemberBatchDel() {
-	
+	id := this.GetString("batch_id")
+
+	if id == "" {
+		this.Abort("403")
+		return
+	}
+	bat := &Batch{}
+	err := rdb.DataBase().QuOne(bat,id)
+	if err == nil {
+		rule := &BatRule{}
+		err = rdb.DataBase().FilterOne(rule,map[string]string{"UserPrefix":bat.UserPrefix})	
+		resp,err:= rdb.DataBase().FilterDel(Members{},map[string]string{"BatchId":id})
+		if err == nil {
+			rule.Count -= resp.Deleted
+			rdb.DataBase().Update(rule.Id,rule)
+		}else {
+			fmt.Println(err)
+		}
+		
+	}
+	this.IdRowDelete(bat,id,"/member/batch")
+	this.Render()
+	return	
 }
 
 
@@ -1077,13 +1137,15 @@ func (this *BusController) MemberBatchRuleAdd() {
 
 		one := &BatRule{}
 		this.ParsePostToStruct(one)
-		_,cnt := rdb.DataBase().FilterInsert(one,"Name")
+		_,cnt := rdb.DataBase().FilterInsert(one,"UserPrefix")
 		if cnt  == 0 {
 			this.AddOperLog(fmt.Sprintf("新增规则%s",one.Name))
 			this.Redirect("/member/batrule", 302)
+			return
 		}else {
 			
-			this.ShowTips("规则有重复 "+strconv.Itoa(cnt) +"个" )
+			
+			this.ShowTips("用户前辍有重复 "+strconv.Itoa(cnt) +"个" )
 			
 		}
 		

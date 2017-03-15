@@ -29,6 +29,7 @@
                 <th>账号前缀</th>
                 <th>账号后缀长度</th>
                 <th>当前序号</th>
+		<th>用户数</th>
                 <th>操作</th>
             </tr>
             </thead>
@@ -39,6 +40,7 @@
                 <td>{{.UserPrefix}}</td>
                 <td>{{.UserSuffixLen}}</td>
                 <td>{{.UserSn}}</td>
+		<td>{{.Count}}</td>
                 <td>
                     {{ if (call $.Match "/member/batrule/update") }}
                     <a class="btn btn-default btn-xs" href="/member/batrule/update?rule_id={{.Id}}">

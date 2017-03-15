@@ -62,7 +62,7 @@
             {{end}}
             
             {{ if call $.Match "/member/delete" }}
-            <a class="btn btn-sm btn-default" href="javascript:do_delete('${user.account_number}');">删除</a>
+            <a class="btn btn-sm btn-default" href="javascript:do_delete('{{.User.Id}}');">删除</a>
             {{end}}
             </div>
         </div>   
@@ -253,7 +253,7 @@ function do_pause(account_number)
         return;
     }
     params = {account_number:account_number};
-    $.post("/account/pause", params, function (data) {
+    $.post("/member/pause", params, function (data) {
         alert(data.msg)
         window.location.reload();
     },"json");
@@ -265,7 +265,7 @@ function do_resume(account_number)
         return;
     }
     params = {account_number:account_number};
-    $.post("/account/resume", params, function (data) {
+    $.post("/member/resume", params, function (data) {
         alert(data.msg)
         window.location.reload();
     },"json");
@@ -274,7 +274,7 @@ function do_resume(account_number)
 function release(account_number)
 {
     params = {account_number:account_number};
-    $.post("/ops/user/release", params, function (data) {
+    $.post("/member/release", params, function (data) {
         alert(data.msg)
         location.href.reload();
     },"json");
@@ -283,7 +283,7 @@ function release(account_number)
 function do_delete(account_number)
 {
     if(confirm("删除账号将删除账号所有相关数据，包括账号，日志，订单等，不可恢复，确认操作吗？")) {
-        window.location.href = "/account/delete?account_number="+account_number;
+        window.location.href = "/member/delete?member_id="+account_number;
     }
     
 }

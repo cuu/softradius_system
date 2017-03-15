@@ -491,7 +491,7 @@ func (this *BaseController) GetStringF(key string) float64 {
 }
 
 func (this *BaseController) GetOperator() *Operators {
-	name := this.GetString("username")
+	name := this.GetCookie("username")
 
 	one := &Operators{}
 

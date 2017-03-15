@@ -50,7 +50,7 @@
                         <td>{{.CreateTime}}</td>
                         <td>
                             {{ if (call $.Match "/member/batch/delete") }}
-                            <a class="opt-btn btn-default" href="javascript:deleteBatchGroup('${batch.id}')">删除</a>
+                            <a class="opt-btn btn-default" href="javascript:deleteBatchGroup('{{.Id}}')">删除</a>
                             {{end}}
                             {{ if (call $.Match "/member/batch/export") }}
                             <a class="opt-btn btn-default" href="javascript:exportBatchGroup('${batch.id}', 'csv')">导出CSV</a>
