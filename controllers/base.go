@@ -147,7 +147,7 @@ func (this *BaseController) Prepare(){
 	this.LayoutSections["HeadCss"] = "head_css.tpl"
 
 	this.Forms = make(map[string]*models.Form)
-	
+	this.PerPage = 100 // default perpage 
         if app, ok := this.AppController.(GuuPreparer); ok {
                 app.GuuPrepare()
         }

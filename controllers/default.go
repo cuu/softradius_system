@@ -160,7 +160,7 @@ func (this *DefController) Login_post() {
 	
 }
 
-func (this *DefController) MembersPageData(qu string ,skip int )(int, []Members){
+func (this *DefController) QuickSearchPageData(qu string ,skip int )(int, []Members){
 	var nods []Members
 
 	/*
@@ -193,7 +193,7 @@ func (this *DefController) QuickSearch() {
 	pdus := this.ProductList()
 
 	page := this.InitPage()	
-	total,mbms := this.MembersPageData(query, libs.Or(page.Page,0).(int)*this.PerPage )
+	total,mbms := this.QuickSearchPageData(query, page.Page*this.PerPage)
 	page.MakePager(total)
 	
 	this.Data["MemberList"] = mbms

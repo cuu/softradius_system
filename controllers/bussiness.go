@@ -271,7 +271,7 @@ func (this *BusController) OpenCalc() {
 func (this *BusController) member_list( skip int) []Members {
 	var nods []Members
 	
-	rdb.DataBase().SkipGet2(&nods,skip*this.PerPage,this.PerPage)
+	rdb.DataBase().SkipGet2(&nods,skip,this.PerPage)
 
 	return nods
 }
@@ -324,17 +324,28 @@ func (this *BaseController) ToPairMapI( v interface{},list []string ) map[string
 	return ret
 }
 
+
+func (this *BusController) MembersPageData(skip int)(int,[]Members) {
+
+	mbms  := this.member_list(skip)
+	total := rdb.DataBase().TableCount("members")
+	return total,mbms
+}
+
 func (this *BusController) Members () {
 	nods := this.NodeList()
 	pdus := this.ProductList()
-	
-	mbms := this.member_list(0)
 
+	page := this.InitPage()
+	
+	total,mbms := this.MembersPageData(page.Page*this.PerPage)
+	page.MakePager(total)
 
 	this.Data["MemberList"] = mbms
 	this.Data["ProductMap"] = this.ToPairMapS(pdus,[]string{"Id","Name"})
 	this.Data["NodeMap"]    = this.ToPairMapS(nods,[]string{"Id","Name"})
 	this.Data["IsExpire"]  = libs.IsExpire
+	this.Data["Paginator"] = page.Render()
 	
 	this.TplName ="bus_member_list.html"
 	

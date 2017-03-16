@@ -227,6 +227,7 @@ func (this *OptController) OperLogPageData(skip int) (int,[]OperLog) {
 	}
 
 	if operator_name == "" && keyword == "" && query_begin_time == "" && query_end_time =="" {
+		fmt.Println("allempty")
 		rdb.DataBase().SkipGet2(&logs,skip,this.PerPage)
 		total = rdb.DataBase().TableCount(&logs)
 		
