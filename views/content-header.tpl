@@ -1,5 +1,5 @@
 <h1>
-  SoftRadius <small>Version 0.11</small>
+  SoftRadius <small>Version 0.2</small>
 </h1>
 
 <ol class="breadcrumb">

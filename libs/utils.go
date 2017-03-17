@@ -316,6 +316,12 @@ func Bbgb2mb(bb int,gb int) string {
 	return fmt.Sprintf("%.2f",tl)
 }
 
+func StrKb2mb (kb string ) string {
+	//	fmt.Println(kb)
+	_kb,_ := strconv.Atoi(kb)
+	v:= float64(_kb/1024.0)
+	return fmt.Sprintf("%.2f",v)
+}
 func Kb2mb (kb int ) string {
 //	fmt.Println(kb)
 	v:= float64(kb/1024.0)

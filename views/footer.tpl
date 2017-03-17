@@ -1,2 +1,2 @@
 
-<span>copyright</span>
+<span>Copyright 2017 SoftRadius</span>

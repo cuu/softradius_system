@@ -15,8 +15,10 @@
       </a>
       <!-- Navbar Right Menu -->
       <div class="navbar-custom-menu">
-        <ul class="nav navbar-nav">
-    
+        <ul class="nav navbar-nav navbar-right">
+	  <li >
+	    <a href="/dashboard"><i class="fa fa-dashboard"></i>&nbsp;控制面板</a>
+	  </li>
           <!-- User Account: style can be found in dropdown.less -->
           <li class="dropdown user user-menu">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">

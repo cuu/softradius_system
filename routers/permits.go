@@ -131,6 +131,7 @@ func init() {
 	beego.AddFuncMap("Fen2yuan",libs.Fen2yuan)
 	beego.AddFuncMap("Bps2mbps",libs.Bps2mbps)
 	beego.AddFuncMap("Kb2mb",   libs.Kb2mb)
+	beego.AddFuncMap("StrKb2mb",   libs.StrKb2mb)
 	beego.AddFuncMap("Sec2hour",libs.Sec2hour)
 	
 	beego.AddFuncMap("In",      libs.In)

@@ -1,6 +1,10 @@
 package controllers
 
 import (
+
+	"os/exec"
+	"log"
+	"strings"
 	r "github.com/cuu/softradius/routers"
 //	"github.com/cuu/softradius/models"
 	"github.com/cuu/softradius/libs"
@@ -42,6 +46,10 @@ func init(){
 
  	_ctl.routes = append( _ctl.routes,
 		r.Route{Path:"/quicksearch",Name:"快速搜索栏",Category:_cate,Is_menu :false, Order:1.4,Is_open:true, Methods:"*:QuickSearch"})
+
+ 	_ctl.routes = append( _ctl.routes,
+		r.Route{Path:"/dashboard",Name:"控制面板",Category:_cate,Is_menu :false, Order:1.5,Is_open:true, Methods:"*:DashBoard"})
+	
 		
 	_ctl.AddRoutes()
 	
@@ -82,7 +90,7 @@ func (this *DefController) GuuPrepare(){
 //------------------------------------------------------------
 
 func (this *DefController) HomePage(){
-	this.Redirect("/node",302)
+	this.Redirect("/dashboard",302)
 }
 
 
@@ -208,4 +216,103 @@ func (this *DefController) QuickSearch() {
 
 	
 	this.Render()
+}
+
+func (this *DefController) GetCliOutput(cmd string) string {
+	out, err := exec.Command("bash","-c",cmd).Output()
+	if err != nil {
+		return fmt.Sprintf("Failed to execute command: %s", cmd)
+	}
+	return string(out)	
+}
+
+
+func (this *DefController) GetCpuPercentage() []string {
+
+	var ret []string
+	cmd := "grep -c ^processor /proc/cpuinfo"
+	tmp := this.GetCliOutput(cmd)
+
+	if num,err := strconv.Atoi(tmp);err == nil {
+		for i:=0;i<num;i++ {
+			//
+			i++;
+		}
+	}
+	return ret
+}
+
+func (this *DefController) GetCurrentDate() string {
+	cmd := "date"
+	return this.GetCliOutput(cmd)
+}
+
+func (this *DefController) GetDiskUsage() *libs.DiskStatus {
+	dk := libs.DiskUsage("/")
+	return &dk
+}
+
+func (this *DefController) GetMemInfo() [][]string {
+	cmd := "cat /proc/meminfo"
+	tmp := this.GetCliOutput(cmd)
+	var ret [][]string
+	arr := strings.Split(tmp,"\n")
+	for _,v := range arr {
+		if strings.HasPrefix(v,"MemTotal") || strings.HasPrefix(v,"MemFree")|| strings.HasPrefix(v,"Cached") {
+			//v = strings.Replace(v,"  ","",-1)
+			//fmt.Println(v)
+			fields := strings.Fields(v)
+			fmt.Println(fields)
+			a := []string{fields[0],fields[1]}
+			ret = append(ret,a)
+		}
+	}
+
+	return ret
+}
+
+func (this *DefController) GetSystemLoad() string {
+	cmd := "cat /proc/loadavg"
+	return this.GetCliOutput(cmd)
+}
+
+func (this *DefController) GetTopbn1() string {
+	cmd := `top -b -n1 | grep "Tasks:" -A1`
+	tmp := this.GetCliOutput(cmd)
+	tmp = strings.Replace(tmp,"\n","<br />",1)
+	return tmp
+}
+
+func (this *DefController) GetCpu() string{
+	
+	cmd := "cat /proc/cpuinfo | egrep '^model name' | uniq | awk '{print substr($0, index($0,$4))}'"
+	return this.GetCliOutput(cmd)
+}
+
+func (this *DefController) GetUptime() string {
+	
+	out, err := exec.Command("uptime").Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tmp := strings.Split(string(out),",")
+	return string(tmp[0])
+	
+}
+//控制面板
+func (this *DefController) DashBoard() {
+	this.ResetLayout()
+	this.TplName = "dashboard.html"
+
+	this.Data["Uptime"]     = this.GetUptime()
+	this.Data["CPU"]        = this.GetCpu()
+	this.Data["SystemLoad"] = this.GetSystemLoad()
+	this.Data["ServerTime"] = this.GetCurrentDate()
+	this.Data["Topbn1"]     = this.GetTopbn1()
+	this.Data["MemInfo"]    = this.GetMemInfo()
+	this.Data["Disk"]       = this.GetDiskUsage()
+	
+	this.Render()
+	return
 }

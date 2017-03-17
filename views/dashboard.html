@@ -1,0 +1,76 @@
+<div class="col-md-6">
+  <div class="box">
+    <div class="box-header">
+      <h3 class="box-title">综合信息</h3>
+     
+    </div>
+    <!-- /.box-header -->
+    <div class="box-body no-padding">
+      <table class="table">
+	<tr>
+	  <td>Uptime</td>
+	  <td>
+	    {{ .Uptime }}
+	  </td>
+	</tr>
+	<tr>
+	  <td>CPU</td>
+	  <td>{{.CPU}} </td>
+	</tr>
+	<tr>
+	  <td>SystemLoad</td>
+	  <td>{{ .SystemLoad }}</td>
+	</tr>
+	<tr>
+	  <td></td>
+	  <td>{{str2html .Topbn1 }} </td>
+	</tr>
+	<tr>
+	  <td>服务器时间</td>
+	  <td>{{ .ServerTime}} </td>
+	</tr>
+	
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<div class="col-md-6">
+  <div class="box">
+    <div class="box-header">
+      <h3 class="box-title">内存信息</h3>
+     
+    </div>
+    <!-- /.box-header -->
+    <div class="box-body no-padding">
+      <table class="table">
+	{{range $index,$elem := .MemInfo}}
+	<tr>
+	  <td>{{index $elem 0 }}</td>
+	  <td>
+	    {{StrKb2mb (index $elem 1 )}} MB
+	  </td>
+	</tr>
+	{{end}}
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-6">
+  <div class="box">
+    <div class="box-header">
+      <h3 class="box-title">硬盘信息</h3>
+     
+    </div>
+    <!-- /.box-header -->
+    <div class="box-body no-padding">
+      <table class="table">
+	<tr> <td>全部</td>  <td>{{ .Disk.GetGB "All" }}</td></tr>
+	<tr> <td>已使用</td>  <td>{{ .Disk.GetGB "Used" }}</td></tr>
+	<tr> <td>剩余</td>  <td>{{ .Disk.GetGB "Free" }}</td></tr>	
+      </table>
+    </div>
+  </div>
+</div>
