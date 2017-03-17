@@ -247,6 +247,40 @@ func (this *DefController) GetCurrentDate() string {
 	return this.GetCliOutput(cmd)
 }
 
+
+func (this *DefController) GetMacAddr(iface string) string {
+	cmd := "cat /sys/class/net/%s/address"
+	return this.GetCliOutput(fmt.Sprintf(cmd,iface))
+	
+}
+
+func (this *DefController) GetMaskAddr(iface string) string {
+	cmd := `/sbin/ifconfig %s | awk -F: '/Mask:/{print $4}'`
+	return this.GetCliOutput(fmt.Sprintf(cmd,iface))
+}
+
+func (this *DefController) GetIpAddr(iface string) string {
+	cmd := `/sbin/ifconfig %s | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
+	return this.GetCliOutput(fmt.Sprintf(cmd,iface))
+}
+
+
+func (this *DefController) GetInterfaceList() []string {
+	cmd :=`ifconfig -a | sed 's/[ \t].*//;/^\(lo\|\)$/d'`
+
+	tmp := this.GetCliOutput(cmd)
+	var ret []string
+	
+	arr := strings.Split(tmp,"\n")
+
+	for _,v := range arr {
+		if len(v)> 2 {
+			ret = append(ret,v)
+		}
+	}
+	return ret
+}
+
 func (this *DefController) GetDiskUsage() *libs.DiskStatus {
 	dk := libs.DiskUsage("/")
 	return &dk
@@ -312,6 +346,10 @@ func (this *DefController) DashBoard() {
 	this.Data["Topbn1"]     = this.GetTopbn1()
 	this.Data["MemInfo"]    = this.GetMemInfo()
 	this.Data["Disk"]       = this.GetDiskUsage()
+	this.Data["GetMac"]     = this.GetMacAddr
+	this.Data["GetIp"]      = this.GetIpAddr
+	this.Data["GetMask"]    = this.GetMaskAddr
+	this.Data["Interfaces"] = this.GetInterfaceList()
 	
 	this.Render()
 	return

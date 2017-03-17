@@ -74,3 +74,25 @@
     </div>
   </div>
 </div>
+
+
+<div class="col-md-6">
+  <div class="box">
+    <div class="box-header">
+      <h3 class="box-title">网络信息</h3>
+     
+    </div>
+    <!-- /.box-header -->
+    {{ range $index,$elem := .Interfaces }}
+    <div class="box-body no-padding">
+      <table class="table  " style="table-layout:fixed">
+	<tr style="background-color:#f9f9f9"><td><span style="font-size:24px;"><b> {{ $elem }}</b> </span></td><td></td></tr>
+	<tr> <td>Ip</td>  <td>{{call $.GetIp $elem}}</td></tr>
+	<tr> <td>Mac address</td>  <td>{{ call $.GetMac $elem }}</td></tr>
+	<tr> <td>Mask</td>  <td> {{call $.GetMask $elem }}  </td></tr>
+      </table>
+    </div>
+    <br />
+    {{end}}
+  </div>
+</div>
