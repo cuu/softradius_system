@@ -24,7 +24,12 @@ var Opr_type = map[int]string{ SUPEROPERA: "系统管理员", NORMALOPERA: "普�
 
 var Opr_status = map[int]string{0: "正常", 1: "停用"}
 
-
+var OprWhiteList = []string{
+	"/",
+	"/dashboard",
+	"/login",
+	"/logout",
+}
 type GuuPreparer interface {
         GuuPrepare()
 }
@@ -42,6 +47,7 @@ type BaseController struct {
 	PerPage  int
 
 }
+
 
 
 func (this *BaseController) Inactive(m r.Menu) string {
@@ -282,7 +288,7 @@ func (this *BaseController) SetCookie( name string, value string, others ...inte
 	this.Ctx.Output.Cookie(name,value,others...)
 }
 
-//Tr用的是 SecureCookie
+//Release用的是 SecureCookie
 func (this *BaseController) GetSecCookie( key string) (string ,bool){
 	return this.GetSecureCookie(this.Secret,key)
 }
@@ -300,10 +306,23 @@ func (this *BaseController) CheckOprCategory(cat string) bool {
 	return r.Permits.Check_opr_category(this.GetCookie("username"),cat)
 }
 
+
+func (this *BaseController) AuthOprWhiteList() (result bool) {
+	url := libs.RemoveSuffix(this.Ctx.Input.URL(),"/")
+	for _,v := range OprWhiteList {
+		if v == url {
+			result = true
+			break
+		}
+	}
+
+	return result
+	
+}
 //把this中的routes 放到 routers.Permits 中
 
 
-/// 略等于tr的auth_opr,验证当前的管理员状态
+/// auth_opr,验证当前的管理员状态
 func (this *BaseController) AuthOpr() (result bool) {
 	//this.Ctx.Input.IsPost(),URL
 	// $GOCODE/src/github.com/axxx/beego/context/input.go
@@ -318,6 +337,7 @@ func (this *BaseController) AuthOpr() (result bool) {
 		fmt.Println(this.Ctx.Input.URL())
 		rule,ok := r.Permits.Get_route(this.Ctx.Input.URL())
 		if ok {
+
 			for _,v := range rule.GetOprs() {
 				if v == opr {
 					result = true
@@ -326,7 +346,12 @@ func (this *BaseController) AuthOpr() (result bool) {
 			}
 			
 			if result != true {
+				result = this.AuthOprWhiteList()
+			}
+			
+			if result != true {
 				this.Abort("403")
+				return
 			}
 			result = false
 		}

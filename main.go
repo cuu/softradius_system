@@ -79,7 +79,7 @@ func before_run_beego() {
 	}
 
 	opera := &Operators{}
-	err = rdb.DataBase().FilterOne(opera,map[string]int{"Type":0})
+	err = rdb.DataBase().FilterOne(opera,map[string]int{"Type":SUPEROPERA})
 	if err == nil {
 		r.Permits.Bind_super(opera.Name)
 	}else{

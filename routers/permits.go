@@ -137,6 +137,7 @@ func init() {
 	beego.AddFuncMap("In",      libs.In)
 	beego.AddFuncMap("Or",      libs.Or)
 	beego.AddFuncMap("Str",     libs.Str)
+	beego.AddFuncMap("ToInt",   libs.ToInt)
 }
 
 func (r *Route) GetOprs() []string {
@@ -170,12 +171,14 @@ func (p *Permit) Bind_opr(opr string,path string){
 
 	if _, ok := p.routes[path]; ok {
 		oprs := p.routes[path].Oprs
-		for _,o := range oprs {
-			if o == opr {
-				return
-			}
+		
+		if libs.InSlice(opr,oprs) == false {
+			p.routes[path].Oprs = append(p.routes[path].Oprs,opr)
+		}else {
+			fmt.Println("in this path",path)
 		}
-		p.routes[path].Oprs = append(p.routes[path].Oprs,opr)
+
+		fmt.Println(p.routes[path])
 	}
 }
 
@@ -196,20 +199,20 @@ func (p *Permit) Check_open(path string) bool{
 	return p.routes[path].Is_open
 }
 
-func (p *Permit) Check_opr_category(opr string, category string)  bool {
+func (p *Permit) Check_opr_category(opr string, category string) (result bool) {
 	
 	for _,v := range p.routes {
 		if v.Category == category {
 			for _,o := range v.Oprs {
 				if o == opr {
-					return true
+					result = true
+					break
 				}
 			}
-			return false
 		}
 	}
 
-	return false
+	return 
 }
 
 func (p *Permit) Build_menus( order_cats []string) {

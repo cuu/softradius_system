@@ -20,6 +20,9 @@ import (
 var _base_id int
 
 func RemoveSuffix(str string, suf string) string {
+	if len(str) == 1 {
+		return str
+	}
 	for {
 		if strings.HasSuffix(str,suf) {
 			str = str[:len(str)-1]
@@ -290,6 +293,11 @@ func In( in interface{},  list ...interface{}) bool {
 	}
 	
 	return ret
+}
+
+func ToInt(str string ) int{
+	s,_ := strconv.Atoi(str)
+	return s
 }
 
 //一般,乘法是int,除法是string

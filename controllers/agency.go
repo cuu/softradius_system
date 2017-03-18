@@ -25,10 +25,6 @@ type AgencyController struct {
 }
 
 
-const (
-	AGENCY_OPERATOR =2
-)
-
 //agency share cut logs
 type AgencyShare struct {
 	Id string `gorethink:"id,omitempty"`
@@ -254,7 +250,7 @@ func (this *AgencyController) AgencyOpen() {
 		this.ParsePostToStruct(op)
 		op.Name = opname
 		op.Pass = this.GetString("OperatorPass")
-		op.Type = AGENCY_OPERATOR
+		op.Type = AGENCYOPERA
 		op.Desc = "代理商"
 		
 		fmt.Println("op: ",op)

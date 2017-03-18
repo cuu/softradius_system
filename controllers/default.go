@@ -142,7 +142,13 @@ func (this *DefController) Login_post() {
 				//先解绑 unbind_opr
 				//再从数据库的 取得所有的 opr rule
 				//bind_opr一回
-				
+				r.Permits.Unbind_opr(auser.Name)
+				for _,v := range auser.RuleItem {
+					r.Permits.Bind_opr(auser.Name,v)
+				}
+			}else {
+				r.Permits.Unbind_opr(auser.Name)
+				r.Permits.Bind_super(auser.Name)
 			}
 			ret.Code = 0
 			ret.Msg = "ok"
@@ -350,6 +356,7 @@ func (this *DefController) DashBoard() {
 	this.Data["GetIp"]      = this.GetIpAddr
 	this.Data["GetMask"]    = this.GetMaskAddr
 	this.Data["Interfaces"] = this.GetInterfaceList()
+	this.Data["OprType"]    = Opr_type
 	
 	this.Render()
 	return
