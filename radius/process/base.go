@@ -1,8 +1,8 @@
 package process
 
 import (
-	re "gopkg.in/gorethink/gorethink.v3"	
-	rdb "github.com/cuu/softradius/database/shelf"
+//	re "gopkg.in/gorethink/gorethink.v3"	
+//	rdb "github.com/cuu/softradius/database/shelf"
 	//	ctl "github.com/cuu/softradius/controllers"
 	//	"fmt"
 	"github.com/cuu/radius"
@@ -184,9 +184,8 @@ func (self *Entry) AuthProcess(user string,pass string) bool {
 	au.GetUser(user,pass) 
 	au.GetProduct()
 	au.Billing()
-
 	
-	if au.Resp.Code == 3 {
+	if au.Resp.Code == AccessReject {
 		log.Printf("%s rejected (%s #%d)\n", user, (*self.Rw).RemoteAddr(), self.Pkt.Identifier)
 		var attributes []*radius.Attribute
 		for i,v := range au.Resp.Attrs {
@@ -200,7 +199,7 @@ func (self *Entry) AuthProcess(user string,pass string) bool {
 		
 		(*self.Rw).AccessReject(attributes...)
 		
-	}else if au.Resp.Code == 2 {
+	}else if au.Resp.Code == AccessAccept {
 		attrs := self.OkAuth()		
 		log.Printf("%s accepted (%s #%d)\n", user, (*self.Rw).RemoteAddr(), self.Pkt.Identifier)
 		(*self.Rw).AccessAccept(attrs...)		
@@ -212,16 +211,6 @@ func (self *Entry) AuthProcess(user string,pass string) bool {
 
 
 //--------------------------------------------------------------------------
-func init_database() {
-	err := rdb.Register(re.ConnectOpts{
-		Address: "localhost:28015",
-	}, "SoftRadius")
-	if err != nil {
-		panic("Db connect failed...")
-	}
-	
-}
-
 func init(){
-	init_database()
+	
 }

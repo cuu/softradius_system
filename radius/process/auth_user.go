@@ -116,7 +116,7 @@ func (p *AuthUser) Billing() bool {
 	}else if acct_policy ==r.AwesomeFee {
 		/// 更新用户的过期时间,因为,初创时,都设成了3000年
 		///
-		UpdateUserExpire(p.User)
+		UpdateUserExpire(p)
 		if p.User.TimeLength <= 0{
 			return p.ErrorAuth("User Time lack")
 		}
@@ -129,7 +129,7 @@ func (p *AuthUser) Billing() bool {
 		
 	}else if acct_policy == r.AwesomeFeeBoTime {
 		/// 更新用户过期先
-		UpdateUserExpire(p.User)
+		UpdateUserExpire(p)
 		if p.User.TimeLength <=0 {
 			return p.ErrorAuth("User Time lack")
 		}

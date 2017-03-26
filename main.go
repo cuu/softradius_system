@@ -30,6 +30,17 @@ func page_not_found(rw http.ResponseWriter, r *http.Request){
 }
 */
 
+func init_database() {
+	err := rdb.Register(re.ConnectOpts{
+		Address: "localhost:28015",
+	}, "SoftRadius")
+	if err != nil {
+		panic("Db connect failed...")
+	}
+	
+}
+
+
 func GuuRecoverPanic(ctx *context.Context) {
 	ErrAbort := errors.New("User stop run")
 	if err := recover(); err != nil {
@@ -71,15 +82,10 @@ func before_run_beego() {
 	//还要  bind_super ,super是从 数据库得到 operator_type == 0 的用户们
 	
 	
-	err := rdb.Register(re.ConnectOpts{
-		Address: "localhost:28015",
-	}, "SoftRadius")
-	if err != nil {
-		panic("Db connect failed...")
-	}
-
+	init_database()
+	
 	opera := &Operators{}
-	err = rdb.DataBase().FilterOne(opera,map[string]int{"Type":SUPEROPERA})
+	err := rdb.DataBase().FilterOne(opera,map[string]int{"Type":SUPEROPERA})
 	if err == nil {
 		r.Permits.Bind_super(opera.Name)
 	}else{
@@ -112,30 +118,45 @@ func run_beego(){
 	beego.Run()	
 }
 
-
+func print_help() {
+	fmt.Println("Useage:")
+	fmt.Println("softradius -admin")
+	fmt.Println("softradius -radius")
+	fmt.Println("softradius -radacct")		
+	
+}
 
 func main() {
 	
 	admin := flag.Bool("admin",false,"Run admin interface")
 	radius := flag.Bool("radius",false, "Run radius server")
 	radacct := flag.Bool("radacct",false,"Run radius acct server")
-
+	help := flag.Bool("help",false,"Print Help")
+	
 	rand.Seed(time.Now().UTC().UnixNano())
 	
 	flag.Parse()
-		
+	
+	if *help == true {
+		print_help()
+		return
+	}
+	
 	if *admin == true {
+		fmt.Println("run beego")
 		run_beego()
 	}else {
 		if *radius == true {
 			//	fmt.Println("Run radius server....")
-			
+			init_database()
 			rad.BeAuthServer("testing123")
 		}else if *radacct == true {
+			init_database()
 			rad.BeAcctServer("testing123")
 		}
 		
 	}
-	
+
+	print_help()
 }
 

@@ -70,9 +70,9 @@ type Products struct {
 	ConcurNumber int
 	FeePeriod string
 	FeeMonths int
-	FeeTimes  int
+	FeeTimes  int /// unit: Seconds
 	FeeFlows  int
-	FeePrice  int
+	FeePrice  int  // unit: cents
 	InputMaxLimit int
 	OutputMaxLimit int
 	CreateTime  string

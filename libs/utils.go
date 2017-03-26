@@ -364,6 +364,17 @@ func AddMonths( t time.Time, months int ) time.Time {
 	
 }
 
+func AddDuration(t time.Time, dur_str string) time.Time {
+//	now := time.Now()
+	dur,err := time.ParseDuration(dur_str)
+	if err == nil {
+		return t.Add(dur)
+	}else{
+		panic("AddDuration failed")
+		return t
+	}
+}
+
 func IsExpire(dstr string ) bool {
 	if dstr == "" {
 		return false
