@@ -11,13 +11,12 @@ import (
 )
 
 //封装一下radius的特定操作
-
 func UpdateUserExpire(au *AuthUser) {
 	if au.User.ExpireDate == r.MAX_EXPIRE_DATE {
 		if au.Product.Policy == r.AwesomeFee || au.Product.Policy == r.AwesomeFeeBoTime {
 			sec := au.Product.FeeTimes
-			now := time.Now()
-			new_date := libs.AddDuration(now,fmt.Sprintf("%ds",sec))
+			once_created := times.StrToLocalTime(au.User.CreateTime) // panic if there is no CreateTime
+			new_date := libs.AddDuration(once_created,fmt.Sprintf("%ds",sec))
 			strTime := times.Format("Y-m-d H:i:s", new_date)
 			au.User.ExpireDate = strTime
 			

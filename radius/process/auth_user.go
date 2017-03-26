@@ -114,8 +114,7 @@ func (p *AuthUser) Billing() bool {
 			return p.ErrorAuth("User Time lack")
 		}
 	}else if acct_policy ==r.AwesomeFee {
-		/// 更新用户的过期时间,因为,初创时,都设成了3000年
-		///
+		/// 更新用户的过期时间
 		UpdateUserExpire(p)
 		if p.User.TimeLength <= 0{
 			return p.ErrorAuth("User Time lack")
@@ -125,6 +124,7 @@ func (p *AuthUser) Billing() bool {
 		}
 		if libs.IsExpire(p.User.ExpireDate) {
 			p.Resp.Attrs["Framed-Pool"] = ""
+			return p.ErrorAuth("User expired")
 		}
 		
 	}else if acct_policy == r.AwesomeFeeBoTime {
@@ -133,6 +133,10 @@ func (p *AuthUser) Billing() bool {
 		if p.User.TimeLength <=0 {
 			return p.ErrorAuth("User Time lack")
 		}
+		if libs.IsExpire(p.User.ExpireDate) {
+			p.Resp.Attrs["Framed-Pool"] = ""
+			return p.ErrorAuth("User expired")
+		}		
 		
 	}
 	
