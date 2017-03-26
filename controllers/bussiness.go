@@ -897,6 +897,7 @@ func (this *BusController) MemberBatchAdd() {
 		this.ParsePostToStruct(bat)
 		bat.UserPrefix = rule.UserPrefix
 		bat.Count = 0 // bat count depends on the actual inserted
+		bate.CreateTime = libs.Get_currtime()
 		
 		agc := &Agency{}
 		opera := this.GetOperator()

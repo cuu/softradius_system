@@ -16,7 +16,7 @@
             <h3 class="box-title">批量创建用户批次列表</h3>
         </div>
         <div class="box-body">
-            <div class="container">
+            <div class="">
                 <div class="pull-right bottom10">
                     {{ if (call $.Match "/member/batch/add") }}
                     <a href="/member/batch/add" class="btn btn-sm btn-info">批量创建用户</a>
@@ -50,13 +50,13 @@
                         <td>{{.CreateTime}}</td>
                         <td>
                             {{ if (call $.Match "/member/batch/delete") }}
-                            <a class="opt-btn btn-default" href="javascript:deleteBatchGroup('{{.Id}}')">删除</a>
+                            <a class="btn btn-xs btn-warning" href="javascript:deleteBatchGroup('{{.Id}}')">删除</a>
                             {{end}}
                             {{ if (call $.Match "/member/batch/export") }}
-                            <a class="opt-btn btn-default" href="javascript:exportBatchGroup('${batch.id}', 'csv')">导出CSV</a>
+                            <a class="btn btn-default" href="javascript:exportBatchGroup('${batch.id}', 'csv')">导出CSV</a>
                             {{end}}
                             {{ if (call $.Match "/member/batch/export") }}
-                            <a class="opt-btn btn-default" href="javascript:exportBatchGroup('${batch.id}', 'xls')">导出Excel</a>
+                            <a class="btn btn-default" href="javascript:exportBatchGroup('${batch.id}', 'xls')">导出Excel</a>
                             {{end}}
                         </td>
                     </tr>
