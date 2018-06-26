@@ -1,0 +1,4 @@
+[submodule "static/AdminLTE"]
+	path = static/AdminLTE
+	url = https://github.com/almasaeed2010/AdminLTE.git
+	branch = master
