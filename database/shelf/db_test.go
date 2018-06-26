@@ -1,9 +1,9 @@
 package shelf
 
-import r "gopkg.in/dancannon/gorethink.v2"
+import r "gopkg.in/gorethink/gorethink.v3"
 import . "github.com/pkg4go/assert"
 import "testing"
-
+import "fmt"
 func TestDB(t *testing.T) {
 	a := A{t}
 
@@ -17,4 +17,8 @@ func TestDB(t *testing.T) {
 	db.Close()
 
 	a.Equal(db.IsConnected(), false)
+	
+	fmt.Println("testing..")
+  
+  fmt.Println(db.Table("user"))
 }

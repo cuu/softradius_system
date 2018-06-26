@@ -5,6 +5,10 @@
 
 ## WIP
 
+### Notice
+Insert 用struct的话因为有bug,所以必须要用tag,如 `gorethink:"id"`
+来指定 在rethinkdb中的字段名称
+
 ### shelf
 
 :beers:
