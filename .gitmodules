@@ -6,3 +6,7 @@
 	path = static/plugins/bootstrap-datepicker
 	url = https://github.com/uxsolutions/bootstrap-datepicker.git
 	branch = master
+[submodule "static/plugins/icheck"]
+	path = static/plugins/icheck
+	url = https://github.com/fronteed/icheck.git
+	branch = 1.x
