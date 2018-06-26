@@ -13,10 +13,6 @@
 
 MPL 2.0
 
-## Talk
-* irc.freenode.net  #softradius
-* QQ群 362070107
-
 ## Installation
 * go get github.com/astaxie/beego
 * go get -u github.com/cuu/radius
