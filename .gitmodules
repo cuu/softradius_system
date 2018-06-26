@@ -2,3 +2,7 @@
 	path = static/AdminLTE
 	url = https://github.com/almasaeed2010/AdminLTE.git
 	branch = master
+[submodule "static/plugins/bootstrap-datepicker"]
+	path = static/plugins/bootstrap-datepicker
+	url = https://github.com/uxsolutions/bootstrap-datepicker.git
+	branch = master
